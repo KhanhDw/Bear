@@ -3,9 +3,8 @@
    ======================= */
 
 export interface CreatePostInput {
-  title: string;
-  content: string;
-  authorId: string;
+  post_content: string;
+  post_author_id: string;
 }
 
 /* =======================
@@ -13,17 +12,16 @@ export interface CreatePostInput {
    ======================= */
 
 export interface Post extends CreatePostInput {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  post_id: string;
+  post_created_at: Date;
 }
 
 /* =======================
    UPDATE
    ======================= */
 
-export type UpdatePostInput = Partial<Pick<Post, "title" | "content">> & {
-  id: string;
+export type UpdatePostInput = Partial<Pick<Post, "post_content">> & {
+  post_id: string;
 };
 
 /* =======================
@@ -31,7 +29,7 @@ export type UpdatePostInput = Partial<Pick<Post, "title" | "content">> & {
    ======================= */
 
 export interface DeletePostInput {
-  id: string;
+  post_id: string;
 }
 
 /* =======================
@@ -39,7 +37,7 @@ export interface DeletePostInput {
    ======================= */
 
 export interface GetPostInput {
-  id: string;
+  post_id: string;
 }
 
 /* =======================
@@ -47,7 +45,7 @@ export interface GetPostInput {
    ======================= */
 
 export interface ListPostsInput {
-  authorId?: string;
+  post_author_id?: string;
   search?: string;
   limit?: number;
   offset?: number;

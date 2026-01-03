@@ -1,11 +1,10 @@
 export const createPostSchema = {
   body: {
     type: "object",
-    required: ["title", "content", "authorId"],
+    required: ["post_content", "post_author_id"],
     properties: {
-      title: { type: "string", minLength: 1 },
-      content: { type: "string" },
-      authorId: { type: "string" },
+      post_content: { type: "string" },
+      post_author_id: { type: "number" },
     },
   },
 };

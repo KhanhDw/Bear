@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { createPostService } from "./post.service.js";
+import { createPostService, getPostsService } from "./post.service.js";
 import { CreatePostInput } from "./post.types.js";
 
 export const createPost = async (
@@ -11,5 +11,6 @@ export const createPost = async (
 };
 
 export const getPosts = async (req: FastifyRequest, reply: FastifyReply) => {
-  return [{ id: 1, title: "Hello from post-service" }];
+  const post = await getPostsService();
+  reply.code(201).send(post);
 };

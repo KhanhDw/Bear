@@ -1,18 +1,19 @@
 import { CreatePostInput, Post } from "./post.types.js";
 import { insertPost } from "./post.repository.js";
 import { publishPostCreated } from "./post.events.js";
+import { pool } from "../../src/db/db.js";
 
 export const createPostService = async (
   input: CreatePostInput
 ): Promise<Post> => {
   const post = await insertPost(input);
-
-  // side-effect async
   await publishPostCreated(post);
-
   return post;
 };
-/*
-⚠️ Điểm rất quan trọng:
-Hiện tại Kafka failure sẽ làm request fail vì bạn await.
-*/
+
+export const getPostsService = async (): Promise<Post[]> => {
+  const result = await pool.query(
+    "SELECT post_id, post_author_id, post_content, post_created_at FROM posts"
+  );
+  return result.rows;
+};
