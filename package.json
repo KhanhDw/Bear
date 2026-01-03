@@ -1,0 +1,19 @@
+{
+  "name": "bear",
+  "version": "1.0.0",
+  "private": true,
+  "license": "ISC",
+  "type": "module",
+  "workspaces": [
+    "Backend",
+    "Frontend"
+  ],
+  "scripts": {
+    "install-all": "npm install",
+    "dserver": "npm run dev -w Backend",
+    "dclient": "npm run dev -w Frontend",
+    "dev": "npm run dserver & npm run dclient",
+    "lserver": "npm run lint -w Backend",
+    "post_service": "npx tsx watch Backend/services/post-service/src/server.ts"
+  }
+}
