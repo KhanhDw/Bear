@@ -1,9 +1,7 @@
 import Fastify from "fastify";
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
-import { pool } from "./db/db.js";
-import postRoutes from "../modules/post/post.routes.js";
-import { connectProducer } from "../../../libs/kafka/kafka.producer.js";
+import postRoutes from "./modules/post/post.routes.js";
 
 export const buildApp = () => {
   const app = Fastify({
@@ -12,11 +10,6 @@ export const buildApp = () => {
         target: "pino-pretty",
       },
     },
-  });
-
-  app.addHook("onReady", async () => {
-    await connectProducer();
-    console.log("✅ Kafka Producer connected (post-service)");
   });
 
   // Swagger spec (OpenAPI 3)

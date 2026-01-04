@@ -1,0 +1,14 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Cài tất cả devDependencies (typescript, tsx)
+RUN npm install
+
+# Copy toàn bộ code
+COPY . .
+
+# CMD cho dev
+CMD ["npx", "tsx", "watch", "src/server.ts"]

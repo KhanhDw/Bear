@@ -1,6 +1,12 @@
-import dotenv from "dotenv";
-dotenv.config();
+import { config } from "dotenv";
+config(); // tự động đọc process.env
 import { Pool } from "pg";
+
+console.log("===============>", process.env.DB_HOST);
+console.log("===============>", process.env.DB_PORT);
+console.log("===============>", process.env.DB_NAME);
+console.log("===============>", process.env.DB_USER);
+console.log("===============>", process.env.DB_PASSWORD);
 
 if (!process.env.DB_PASSWORD) {
   throw new Error("DB_PASSWORD is missing");
@@ -21,7 +27,7 @@ pool.on("connect", () => {
   console.log("Connected to PostgreSQL");
 });
 
-pool.on("error", (err) => {
+pool.on("error", (err: Error | null) => {
   console.error("Unexpected PG error", err);
   process.exit(1);
 });

@@ -1,0 +1,123 @@
+# thêm -d để chạy nền
+# thêm logs -f vào để xem logs chạy nền:
+# => docker compose -f docker-compose.dev.yml logs -f post-service
+# chạy nền và  không build lại
+# docker compose -f docker-compose.dev.yml --profile api up -d --no-build post-service
+
+# run this file: docker compose -f docker-compose.dev.yml up
+
+# Chạy đúng 1 service theo profile
+# docker compose -f docker-compose.dev.yml --profile api up post-service
+
+# Chạy tất cả service thuộc profile api
+# docker compose -f docker-compose.dev.yml --profile api up
+
+# Chạy nền
+# docker compose -f docker-compose.dev.yml --profile api up -d
+
+# Xem log
+# docker compose -f docker-compose.dev.yml logs -f post-service
+
+# run nhiều profile cùng lúc
+# docker compose -f docker-compose.dev.yml --profile infra --profile api up -d --no-build
+
+# access postgres to write database: docker exec -it postgres_db psql -U root -d root
+
+# call logs : docker logs -f bear-post-service
+# call logs : docker logs -f postgres_db
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    profiles: ["infra"]
+    restart: always
+    environment:
+      POSTGRES_DB: bear
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  post-service:
+    image: node:20-alpine
+    build:
+      context: Backend/services/post-service
+      dockerfile: Dockerfile.dev
+    container_name: bear-post-service
+    working_dir: /app
+    volumes:
+      - ./Backend/services/post-service:/app:cached
+      - /app/node_modules
+    profiles: ["api"]
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - Backend/services/post-service/.env
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    #   kafka-service:
+    #     condition: service_healthy
+    # environment:
+    #   - KAFKA_BROKER=kafka-service:9092
+    #   - KAFKAJS_NO_PARTITIONER_WARNING=1
+
+#   kafka-service:
+#     image: apache/kafka:latest
+#     container_name: kafka
+#     profiles: ["infra"]
+#     ports:
+#       - "9092:9092"
+#       - "9093:9093"
+#     environment:
+#       KAFKA_NODE_ID: 1
+#       KAFKA_PROCESS_ROLES: broker,controller
+#       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+#       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-service:9092
+#       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+#       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+#       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-service:9093
+#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+#       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+#       TZ: UTC
+#     volumes:
+#       - kafka_data:/tmp/kraft-combined-logs
+#     healthcheck:
+#       test:
+#         [
+#           "CMD",
+#           "bash",
+#           "-c",
+#           "echo '' | /opt/kafka/bin/kafka-console-producer.sh --broker-list localhost:9092 --topic healthcheck 2>/dev/null || exit 1",
+#         ]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 10
+#       start_period: 40s
+#     restart: unless-stopped
+#     networks:
+#       - backend
+
+volumes:
+  postgres_data:
+  # kafka_data:
+
+networks:
+  backend:
+    driver: bridge

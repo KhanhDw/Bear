@@ -14,6 +14,6 @@
     "dclient": "npm run dev -w Frontend",
     "dev": "npm run dserver & npm run dclient",
     "lserver": "npm run lint -w Backend",
-    "post_service": "npx tsx watch Backend/services/post-service/src/server.ts"
+    "dpost_service": "npm run dev_post_service -w  Backend"
   }
 }

@@ -1,6 +1,6 @@
 import { CreatePostInput, Post } from "./post.types.js";
 import { randomUUID } from "crypto";
-import { pool } from "../../src/db/db.js";
+import { pool } from "../../db/db.js";
 
 export const insertPost = async (input: CreatePostInput): Promise<Post> => {
   const result = await pool.query(
