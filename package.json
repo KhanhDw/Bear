@@ -14,6 +14,7 @@
     "dclient": "npm run dev -w Frontend",
     "dev": "npm run dserver & npm run dclient",
     "lserver": "npm run lint -w Backend",
+    "build": "npm run build -w Backend",
     "dpost_service": "npm run dev_post_service -w  Backend"
   }
 }

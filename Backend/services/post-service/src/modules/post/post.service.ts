@@ -7,7 +7,7 @@ export const createPostService = async (
   input: CreatePostInput
 ): Promise<Post> => {
   const post = await insertPost(input);
-  await publishPostCreated(post);
+  await publishPostCreated(post).catch(console.error);
   return post;
 };
 

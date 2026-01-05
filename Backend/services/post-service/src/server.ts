@@ -1,7 +1,10 @@
 import { buildApp } from "./app.js";
-
+import { connectProducer } from "../../../libs/kafka/index.js";
+import "./config/kafka.js";
 const start = async () => {
   const app = buildApp();
+
+  await connectProducer();
 
   try {
     await app.listen({
