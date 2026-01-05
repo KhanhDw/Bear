@@ -1,34 +1,9 @@
-# thêm -d để chạy nền
-# thêm logs -f vào để xem logs chạy nền:
-# => docker compose -f docker-compose.dev.yml logs -f post-service
-# chạy nền và  không build lại
-# docker compose -f docker-compose.dev.yml --profile api up -d --no-build post-service
-
-# run this file: docker compose -f docker-compose.dev.yml up
-
-# Chạy đúng 1 service theo profile
-# docker compose -f docker-compose.dev.yml --profile api up post-service
-
-# Chạy tất cả service thuộc profile api
-# docker compose -f docker-compose.dev.yml --profile api up
-
-# Chạy nền
-# docker compose -f docker-compose.dev.yml --profile api up -d
-
-# Xem log
-# docker compose -f docker-compose.dev.yml logs -f post-service
-
-# run nhiều profile cùng lúc
-# docker compose -f docker-compose.dev.yml --profile infra --profile api up -d --no-build
-
-# access postgres to write database: docker exec -it postgres_db psql -U root -d root
-
-# call logs : docker logs -f bear-post-service
-# call logs : docker logs -f postgres_db
-# call logs : docker logs -f kafka
-# test kafka: kcat -b localhost:29092 -L
+version: "3.9"
 
 services:
+  # ======================
+  # INFRA
+  # ======================
   postgres:
     image: postgres:15
     container_name: postgres_db
@@ -40,64 +15,34 @@ services:
       POSTGRES_PASSWORD: root
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U root -d bear"]
       interval: 5s
       timeout: 5s
       retries: 5
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     networks:
       - backend
 
-  post-service:
-    build:
-      context: Backend/services/post-service
-      dockerfile: Dockerfile.dev
-    container_name: bear-post-service
-    working_dir: /app
-    volumes:
-      - ./Backend/services/post-service:/app:cached
-      - /app/node_modules
-    profiles: ["api"]
-    command: npm run dev
-    ports:
-      - "3000:3000"
-    env_file:
-      - Backend/services/post-service/.env
-    restart: unless-stopped
-    networks:
-      - backend
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka-service:
-        condition: service_healthy
-    environment:
-      - KAFKA_BROKER=kafka-service:9092
-      - KAFKAJS_NO_PARTITIONER_WARNING=1
-
-  kafka-service:
+  kafka:
     image: apache/kafka:4.1.1
     container_name: kafka
     profiles: ["infra"]
     ports:
-      - "9092:9092"
-      - "9093:9093"
       - "29092:29092"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-service:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-service:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      TZ: UTC
     volumes:
       - kafka_data:/tmp/kraft-combined-logs
     healthcheck:
@@ -106,14 +51,58 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    networks:
+      - backend
+
+  # ======================
+  # API SERVICES
+  # ======================
+  post-service:
+    container_name: bear-post-service
+    profiles: ["api"]
+
+    build:
+      context: ./backend/services/post-service
+      dockerfile: Dockerfile.dev
+
+    command: npm run dev
+
+    volumes:
+      # mount source code → hot reload
+      - ./backend/services/post-service:/app
+      # giữ node_modules trong container
+      - /app/node_modules
+
+    ports:
+      - "3001:3000"
+
+    env_file:
+      - ./backend/services/post-service/.env
+
+    environment:
+      SERVICE_NAME: post-service
+      KAFKA_BROKER: kafka:9092
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
     restart: unless-stopped
     networks:
       - backend
 
+# ======================
+# VOLUMES
+# ======================
 volumes:
   postgres_data:
   kafka_data:
 
+# ======================
+# NETWORKS
+# ======================
 networks:
   backend:
     driver: bridge

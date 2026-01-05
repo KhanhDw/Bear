@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@libs/*": ["../../libs/*"]
+    },
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ES2022"
+  }
+}

@@ -2,13 +2,10 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-
-# Cài tất cả devDependencies (typescript, tsx)
+COPY package.json package-lock.json* ./
 RUN npm install
 
-# Copy toàn bộ code
-COPY . .
+# KHÔNG copy source code
+# source lấy từ volume mount
 
-# CMD cho dev
-CMD ["npx", "tsx", "watch", "src/server.ts"]
+CMD ["npm", "run", "dev"]

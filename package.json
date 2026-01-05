@@ -1,25 +1,23 @@
 {
   "name": "bear",
-  "version": "1.0.0",
   "private": true,
-  "license": "ISC",
   "type": "module",
   "workspaces": [
-    "frontend",
-    "backend/services/*",
-    "backend/consumers/*",
-    "backend/libs/*"
+    "Frontend",
+    "Backend/services/*",
+    "Backend/consumers/*",
+    "Backend/libs/*"
   ],
   "scripts": {
-    "install-all": "npm install",
-    "dserver": "npm run dev -w Backend",
-    "dclient": "npm run dev -w Frontend",
-    "dev": "npm run dserver & npm run dclient",
-    "lserver": "npm run lint -w Backend",
-    "build": "npm run build -w Backend"
-  },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.1.18",
-    "tailwindcss": "^4.1.18"
+    "dev:infra": "docker compose -f docker-compose.dev.yml --profile infra up -d",
+    "dev:api": "docker compose -f docker-compose.dev.yml --profile api up",
+    "dev:post": "docker compose -f docker-compose.dev.yml --profile api up post-service",
+    "dev": "npm run dev:infra && npm run dev:api",
+    "down": "docker compose -f docker-compose.dev.yml down",
+    "logs": "docker compose -f docker-compose.dev.yml logs -f",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "localdev:f": "npm --workspace Frontend run dev",
+    "localdev:b:post": "npm --workspace Backend/services/post-service run dev"
   }
 }
