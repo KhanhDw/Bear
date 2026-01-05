@@ -6,41 +6,74 @@ import {
   updatePost,
   deletePost,
 } from "./post.repository.js";
-import { publishPostCreated } from "./post.events.js";
+import {
+  publishPostCreated,
+  publishPostUpdated,
+  publishPostDeleted,
+} from "./post.events.js";
 
-/* CREATE */
+/* =======================
+   CREATE
+   ======================= */
 export const createPostService = async (
   input: CreatePostInput
 ): Promise<Post> => {
   const post = await insertPost(input);
 
-  // emit event (không ảnh hưởng luồng chính)
+  // emit event (fire-and-forget)
   publishPostCreated(post).catch(console.error);
 
   return post;
 };
 
-/* READ ALL */
+/* =======================
+   READ – LIST
+   ======================= */
 export const getPostsService = async (): Promise<Post[]> => {
   return getAllPosts();
 };
 
-/* READ ONE */
+/* =======================
+   READ – GET ONE
+   ======================= */
 export const getPostByIdService = async (
   post_id: string
 ): Promise<Post | null> => {
   return getPostById(post_id);
 };
 
-/* UPDATE */
+/* =======================
+   UPDATE
+   ======================= */
 export const updatePostService = async (
   post_id: string,
   input: UpdatePostInput
 ): Promise<Post | null> => {
-  return updatePost(post_id, input);
+  const post = await updatePost(post_id, input);
+
+  if (post) {
+    publishPostUpdated(post).catch(console.error);
+  }
+
+  return post;
 };
 
-/* DELETE */
+/* =======================
+   DELETE
+   ======================= */
 export const deletePostService = async (post_id: string): Promise<boolean> => {
-  return deletePost(post_id);
+  const post = await getPostById(post_id);
+
+  if (!post) return false;
+
+  const success = await deletePost(post_id);
+
+  if (success) {
+    publishPostDeleted({
+      post_id: post.post_id,
+      post_author_id: post.post_author_id,
+    }).catch(console.error);
+  }
+
+  return success;
 };
