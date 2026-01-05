@@ -5,8 +5,10 @@
   "license": "ISC",
   "type": "module",
   "workspaces": [
-    "Backend",
-    "Frontend"
+    "frontend",
+    "backend/services/*",
+    "backend/consumers/*",
+    "backend/libs/*"
   ],
   "scripts": {
     "install-all": "npm install",
@@ -14,7 +16,10 @@
     "dclient": "npm run dev -w Frontend",
     "dev": "npm run dserver & npm run dclient",
     "lserver": "npm run lint -w Backend",
-    "build": "npm run build -w Backend",
-    "dpost_service": "npm run dev_post_service -w  Backend"
+    "build": "npm run build -w Backend"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "tailwindcss": "^4.1.18"
   }
 }
