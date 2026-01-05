@@ -1,10 +1,20 @@
-import { health } from "../../health/health.route.js";
 import { FastifyInstance } from "fastify";
-import { createPost, getPosts } from "./post.controller.js";
-import { createPostSchema } from "./post.schema.js";
+import {
+  createPost,
+  getPosts,
+  getPostById,
+  updatePost,
+  deletePost,
+} from "./post.controller.js";
+import { createPostSchema, updatePostSchema } from "./post.schema.js";
+import { health } from "../../health/health.route.js";
 
 export default async function postRoutes(app: FastifyInstance) {
   app.post("/", { schema: createPostSchema }, createPost);
-  app.get("/all", getPosts);
+  app.get("/", getPosts);
+  app.get("/:id", getPostById);
+  app.put("/:id", { schema: updatePostSchema }, updatePost);
+  app.delete("/:id", deletePost);
+
   app.get("/health", health);
 }

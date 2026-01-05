@@ -8,3 +8,19 @@ export const createPostSchema = {
     },
   },
 };
+export const updatePostSchema = {
+  params: {
+    type: "object",
+    required: ["id"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+    },
+  },
+  body: {
+    type: "object",
+    required: [],
+    properties: {
+      post_content: { type: "string" },
+    },
+  },
+};
