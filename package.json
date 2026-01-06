@@ -17,12 +17,15 @@
     "logs": "docker compose -f docker-compose.dev.yml logs -f",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
+    "build:B:post": "npm --workspace Backend/services/post-service run build",
+    "localdev:B:post": "npm --workspace Backend/services/post-service run dev",
     "build:F:user": "npm --workspace Frontend/app/user run build",
     "build:F:shell": "npm --workspace Frontend/app/shell run build",
     "preview:F:user": "npm --workspace Frontend/app/user run preview",
-    "preview:F:shell": "npm --workspace Frontend/app/user run preview",
+    "preview:F:shell": "npm --workspace Frontend/app/shell run preview",
+    "preview:F:post": "npm --workspace Frontend/app/post run preview",
     "localdev:F:shell": "npm --workspace Frontend/app/shell run dev",
     "localdev:F:user": "npm --workspace Frontend/app/user run dev",
-    "localdev:B:post": "npm --workspace Backend/services/post-service run dev"
+    "localdev:F:post": "npm --workspace Frontend/app/post run dev"
   }
 }

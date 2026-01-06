@@ -8,10 +8,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
     federation({
-      name: "user",
+      name: "post",
       filename: "remoteEntry.js",
       exposes: {
-        "./UserApp": "./src/bootstrap",
+        "./PostApp": "./src/bootstrap",
       },
       shared: ["react", "react-dom", "react-router-dom"],
     }),
@@ -25,7 +25,7 @@ export default defineConfig({
 
   server: {
     host: true,
-    port: 5174,
+    port: 5175,
     strictPort: true,
     headers: {
       "Access-Control-Allow-Origin": "*",
@@ -33,6 +33,6 @@ export default defineConfig({
   },
 
   preview: {
-    port: 5174,
+    port: 5175,
   },
 });
