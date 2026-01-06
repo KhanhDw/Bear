@@ -13,6 +13,12 @@ npm install fastify
 npm install fastify -w backend/services/post-service
 ```
 
+✅ ĐÚNG:
+
+```bash
+npm i -D @originjs/vite-plugin-federation -w frontend/shell-app
+```
+
 Hoặc nếu package.json của service có name:
 
 ```bash

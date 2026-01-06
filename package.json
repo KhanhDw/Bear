@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "Frontend",
+    "Frontend/app/*",
     "Backend/services/*",
     "Backend/consumers/*",
     "Backend/libs/*"
@@ -17,7 +17,12 @@
     "logs": "docker compose -f docker-compose.dev.yml logs -f",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "localdev:f": "npm --workspace Frontend run dev",
-    "localdev:b:post": "npm --workspace Backend/services/post-service run dev"
+    "build:F:user": "npm --workspace Frontend/app/user run build",
+    "build:F:shell": "npm --workspace Frontend/app/shell run build",
+    "preview:F:user": "npm --workspace Frontend/app/user run preview",
+    "preview:F:shell": "npm --workspace Frontend/app/user run preview",
+    "localdev:F:shell": "npm --workspace Frontend/app/shell run dev",
+    "localdev:F:user": "npm --workspace Frontend/app/user run dev",
+    "localdev:B:post": "npm --workspace Backend/services/post-service run dev"
   }
 }
