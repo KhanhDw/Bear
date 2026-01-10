@@ -1,0 +1,107 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-top: 64px; /* Account for fixed header */
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+/* Responsive layout adjustments */
+@media (min-width: 960px) {
+  .app-container {
+    flex-direction: row;
+  }
+  
+  .content {
+    flex: 1;
+    padding: 24px;
+    margin-left: 240px; /* Account for sidebar width */
+    margin-top: 24px;
+    margin-bottom: 24px;
+  }
+}
+
+/* Common utility classes */
+.text-center {
+  text-align: center;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.full-height {
+  height: 100%;
+}
+
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-auto {
+  overflow: auto;
+}
+
+/* Typography improvements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+p {
+  line-height: 1.6;
+}
+
+/* Material Design shadows */
+.shadow-1 {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.shadow-2 {
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+}
+
+.shadow-3 {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
+
+/* Responsive image styling */
+img {
+  max-width: 100%;
+  height: auto;
+}

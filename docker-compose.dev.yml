@@ -25,7 +25,7 @@ services:
     networks:
       - backend
 
-  kafka:
+  kafka-service:
     image: apache/kafka:4.1.1
     container_name: kafka
     profiles: ["infra"]
