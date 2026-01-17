@@ -1,4 +1,3 @@
-import { Box, Typography, Container } from '@mui/material';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../components/common/Header';
@@ -46,26 +45,15 @@ const PostDetailPage = () => {
   ];
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <div className="app-container">
       <Header onDrawerToggle={handleDrawerToggle} />
-      <Sidebar 
-        mobileOpen={mobileOpen} 
-        handleDrawerToggle={() => setMobileOpen(!mobileOpen)} 
+      <Sidebar
+        mobileOpen={mobileOpen}
+        handleDrawerToggle={() => setMobileOpen(!mobileOpen)}
       />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${240}px)` },
-          minHeight: '100vh',
-          marginTop: '64px',
-        }}
-      >
-        <Container maxWidth="lg">
-          <Typography variant="h4" component="h1" gutterBottom>
-            Post Detail - {id}
-          </Typography>
+      <main className="main-content">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6">Post Detail - {id}</h1>
           <PostCard
             id={samplePost.id}
             authorName={samplePost.authorName}
@@ -76,11 +64,9 @@ const PostDetailPage = () => {
             commentsCount={samplePost.commentsCount}
             createdAt={samplePost.createdAt}
           />
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Comments ({sampleComments.length})
-            </Typography>
-            <Box display="flex" flexDirection="column" gap={2}>
+          <div className="mt-6">
+            <h2 className="text-xl font-bold mb-4">Comments ({sampleComments.length})</h2>
+            <div className="flex flex-col gap-4">
               {sampleComments.map((comment) => (
                 <CommentCard
                   key={comment.id}
@@ -92,11 +78,11 @@ const PostDetailPage = () => {
                   createdAt={comment.createdAt}
                 />
               ))}
-            </Box>
-          </Box>
-        </Container>
-      </Box>
-    </Box>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 

@@ -1,18 +1,4 @@
 import React from "react";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardActions,
-  Avatar,
-  IconButton,
-  Typography,
-} from "@mui/material";
-import {
-  ThumbUp as UpVoteIcon,
-  ThumbDown as DownVoteIcon,
-  ChatBubbleOutline as CommentIcon,
-} from "@mui/icons-material";
 
 interface PostCardProps {
   post_id: string;
@@ -42,61 +28,50 @@ const PostCard: React.FC<PostCardProps> = ({
   onComment,
 }) => {
   return (
-    <Card
-      sx={{ margin: "16px auto", boxShadow: 3 }}
-      className="w-120"
-    >
-      <CardHeader
-        avatar={<Avatar>{post_author_name.charAt(0).toUpperCase()}</Avatar>}
-        title={post_author_name}
-        subheader={post_created_at}
-      />
+    <div className="post-card">
+      <div className="post-header">
+        <div className="avatar">
+          {post_author_name.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <div className="post-author">{post_author_name}</div>
+          <div className="text-gray-500 text-sm">{post_created_at}</div>
+        </div>
+      </div>
       <div className="hidden">
         <p>{post_id}</p>
         <p>{post_author_id}</p>
       </div>
-      <CardContent>
-        <Typography
-          variant="body2"
-          color="text.primary"
-        >
-          {post_content}
-        </Typography>
-      </CardContent>
-      <CardActions>
-        <IconButton
-          aria-label="upvote"
+      <div className="post-content">
+        {post_content}
+      </div>
+      <div className="post-actions">
+        <button 
+          className="flex items-center text-gray-600 hover:text-blue-600"
           onClick={onUpvote}
+          aria-label="upvote"
         >
-          <UpVoteIcon />
-        </IconButton>
-        <Typography
-          variant="caption"
-          sx={{ mr: 1 }}
-        >
-          {upvotes}
-        </Typography>
-        <IconButton
-          aria-label="downvote"
+          👍
+          <span className="ml-1">{upvotes}</span>
+        </button>
+        <button 
+          className="flex items-center text-gray-600 hover:text-blue-600 ml-4"
           onClick={onDownvote}
+          aria-label="downvote"
         >
-          <DownVoteIcon />
-        </IconButton>
-        <Typography
-          variant="caption"
-          sx={{ mr: 2 }}
-        >
-          {downvotes}
-        </Typography>
-        <IconButton
-          aria-label="comment"
+          👎
+          <span className="ml-1">{downvotes}</span>
+        </button>
+        <button 
+          className="flex items-center text-gray-600 hover:text-blue-600 ml-4"
           onClick={onComment}
+          aria-label="comment"
         >
-          <CommentIcon />
-        </IconButton>
-        <Typography variant="caption">{comments_count} comments</Typography>
-      </CardActions>
-    </Card>
+          💬
+          <span className="ml-1">{comments_count} comments</span>
+        </button>
+      </div>
+    </div>
   );
 };
 

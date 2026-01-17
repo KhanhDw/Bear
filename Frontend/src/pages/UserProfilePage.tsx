@@ -1,4 +1,3 @@
-import { Box, Typography, Container } from '@mui/material';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../components/common/Header';
@@ -19,8 +18,8 @@ const UserProfilePage = () => {
     id: id || '1',
     name: id ? `User ${id}` : 'Current User',
     username: id ? `user${id}` : 'currentuser',
-    bio: id 
-      ? `This is the profile for user ${id}. They enjoy hiking, photography, and sharing their experiences with the community.` 
+    bio: id
+      ? `This is the profile for user ${id}. They enjoy hiking, photography, and sharing their experiences with the community.`
       : 'This is your profile. You enjoy hiking, photography, and sharing your experiences with the community.',
     profilePictureUrl: '/static/images/avatar/1.jpg',
     coverImageUrl: '/static/images/cover/1.jpg',
@@ -53,23 +52,14 @@ const UserProfilePage = () => {
   ];
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <div className="app-container">
       <Header onDrawerToggle={handleDrawerToggle} />
-      <Sidebar 
-        mobileOpen={mobileOpen} 
-        handleDrawerToggle={() => setMobileOpen(!mobileOpen)} 
+      <Sidebar
+        mobileOpen={mobileOpen}
+        handleDrawerToggle={() => setMobileOpen(!mobileOpen)}
       />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${240}px)` },
-          minHeight: '100vh',
-          marginTop: '64px',
-        }}
-      >
-        <Container maxWidth="lg">
+      <main className="main-content">
+        <div className="max-w-4xl mx-auto">
           <UserProfileCard
             name={sampleUser.name}
             username={sampleUser.username}
@@ -80,11 +70,9 @@ const UserProfilePage = () => {
             followersCount={sampleUser.followersCount}
             followingCount={sampleUser.followingCount}
           />
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Posts ({samplePosts.length})
-            </Typography>
-            <Box display="flex" flexDirection="column" gap={2}>
+          <div className="mt-6">
+            <h2 className="text-xl font-bold mb-4">Posts ({samplePosts.length})</h2>
+            <div className="flex flex-col gap-4">
               {samplePosts.map((post) => (
                 <PostCard
                   key={post.id}
@@ -98,11 +86,11 @@ const UserProfilePage = () => {
                   createdAt={post.createdAt}
                 />
               ))}
-            </Box>
-          </Box>
-        </Container>
-      </Box>
-    </Box>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 

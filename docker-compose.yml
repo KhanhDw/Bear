@@ -57,6 +57,19 @@ services:
     networks:
       - backend
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    profiles: ["infra"]
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    command: redis-server --appendonly yes
+
   kafka-service:
     image: apache/kafka:4.1.1
     container_name: kafka
@@ -93,6 +106,37 @@ services:
   # ======================
   # MICROSERVICES
   # ======================
+  auth-service:
+    build:
+      context: ./Backend/services/auth-service
+      dockerfile: Dockerfile.dev
+    container_name: bear-auth-service
+    working_dir: /app
+    volumes:
+      - ./Backend/services/auth-service:/app:cached
+      - /app/node_modules
+    profiles: ["api"]
+    command: npm run dev
+    ports:
+      - "3005:3005"
+    env_file:
+      - ./Backend/services/auth-service/.env
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka-service:
+        condition: service_healthy
+    environment:
+      - KAFKA_BROKER=kafka-service:9092
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SERVICE_NAME=auth-service
+
   user-service:
     build:
       context: ./Backend/services/user-service
@@ -114,10 +158,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       kafka-service:
         condition: service_healthy
     environment:
       - KAFKA_BROKER=kafka-service:9092
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - SERVICE_NAME=user-service
 
@@ -142,10 +190,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       kafka-service:
         condition: service_healthy
     environment:
       - KAFKA_BROKER=kafka-service:9092
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - SERVICE_NAME=post-service
 
@@ -170,10 +222,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       kafka-service:
         condition: service_healthy
     environment:
       - KAFKA_BROKER=kafka-service:9092
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - SERVICE_NAME=comment-service
 
@@ -198,10 +254,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       kafka-service:
         condition: service_healthy
     environment:
       - KAFKA_BROKER=kafka-service:9092
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - SERVICE_NAME=search-service
 
@@ -227,6 +287,7 @@ services:
     networks:
       - backend
     depends_on:
+      - auth-service
       - user-service
       - post-service
       - comment-service
@@ -234,10 +295,13 @@ services:
     environment:
       - SERVICE_NAME=gateway
       - JWT_SECRET=${JWT_SECRET:-supersecretkey}
+      - REDIS_URL=redis://redis:6379
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
 
 volumes:
   postgres_data:
   kafka_data:
+  redis_data:
 
 networks:
   backend:

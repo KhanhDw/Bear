@@ -1,128 +1,153 @@
-import React from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Badge,
-  Menu,
-  MenuItem,
-  Avatar,
-  Box,
-} from '@mui/material';
-import {
-  Menu as MenuIcon,
-  Notifications as NotificationsIcon,
-  Mail as MailIcon,
-} from '@mui/icons-material';
-import { Link, useNavigate } from 'react-router-dom';
-import SearchBar from '../ui/SearchBar';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useUserContext } from "../../contexts/UserContext";
 
 interface HeaderProps {
   onDrawerToggle?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { state, logout } = useUserContext();
 
-  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  const closeMenu = () => {
+    setMenuOpen(false);
   };
 
   const handleProfileClick = () => {
-    navigate('/user');
-    handleClose();
+    if (state.isAuthenticated && state.currentUser) {
+      navigate(`/user/${state.currentUser.id}`);
+    } else {
+      navigate("/user");
+    }
+    closeMenu();
   };
 
   const handleLogout = () => {
-    // Handle logout logic
-    console.log('Logout');
-    handleClose();
+    logout();
+    navigate("/login");
+    closeMenu();
+  };
+
+  const handleLogin = () => {
+    navigate("/login");
+    closeMenu();
   };
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-      <Toolbar>
-        <IconButton
-          color="inherit"
-          aria-label="open drawer"
-          onClick={onDrawerToggle}
-          edge="start"
-          sx={{ mr: 2 }}
-        >
-          <MenuIcon />
-        </IconButton>
-        <Typography 
-          variant="h6" 
-          noWrap 
-          component={Link} 
-          to="/feed"
-          sx={{ 
-            flexGrow: 1, 
-            textDecoration: 'none', 
-            color: 'inherit',
-            cursor: 'pointer'
-          }}
-        >
-          SocialApp
-        </Typography>
-        
-        <Box sx={{ flexGrow: 1, maxWidth: 400, mx: 2 }}>
-          <SearchBar />
-        </Box>
-        
-        <IconButton color="inherit">
-          <Badge badgeContent={4} color="secondary">
-            <MailIcon />
-          </Badge>
-        </IconButton>
-        <IconButton color="inherit">
-          <Badge badgeContent={7} color="secondary">
-            <NotificationsIcon />
-          </Badge>
-        </IconButton>
-        <IconButton
-          size="large"
-          aria-label="account of current user"
-          aria-controls="menu-appbar"
-          aria-haspopup="true"
-          onClick={handleMenu}
-          color="inherit"
-        >
-          <Avatar 
-            src="/static/images/avatar/1.jpg" 
-            alt="User"
-            sx={{ width: 32, height: 32 }}
-          >
-            U
-          </Avatar>
-        </IconButton>
-        <Menu
-          id="menu-appbar"
-          anchorEl={anchorEl}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          keepMounted
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          open={Boolean(anchorEl)}
-          onClose={handleClose}
-        >
-          <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
-          <MenuItem onClick={handleClose}>My account</MenuItem>
-          <MenuItem onClick={handleLogout}>Logout</MenuItem>
-        </Menu>
-      </Toolbar>
-    </AppBar>
+    <header className="header">
+      <button
+        className="header-button"
+        onClick={onDrawerToggle}
+        aria-label="Toggle menu"
+      >
+        ☰
+      </button>
+
+      <Link to="/feed" className="header-title">
+        Bear Social
+      </Link>
+
+      {/* Search bar placeholder */}
+      <div
+        className="search-bar-placeholder"
+        style={{ flexGrow: 1, maxWidth: "400px", margin: "0 16px" }}
+      >
+        <input
+          type="text"
+          placeholder="Search..."
+          className="form-input"
+          style={{ width: "100%", padding: "8px 12px" }}
+        />
+      </div>
+
+      {/* Notification icons placeholder */}
+      <div
+        className="header-notifications"
+        style={{ display: "flex", gap: "16px", marginRight: "16px" }}
+      >
+        <button className="header-button" aria-label="Messages">
+          ✉️
+        </button>
+        <button className="header-button" aria-label="Notifications">
+          🔔
+        </button>
+      </div>
+
+      <div className="header-profile">
+        {state.isAuthenticated && state.currentUser ? (
+          <div className="relative">
+            <button
+              className="header-button"
+              onClick={toggleMenu}
+              aria-label="User menu"
+              aria-expanded={menuOpen}
+            >
+              <div className="avatar">
+                {state.currentUser.firstName?.charAt(0) ||
+                  state.currentUser.username.charAt(0)}
+              </div>
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
+                style={{ top: "100%", minWidth: "160px" }}
+              >
+                <button
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  onClick={handleProfileClick}
+                >
+                  Profile
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  onClick={closeMenu}
+                >
+                  My account
+                </button>
+                <button
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="relative">
+            <button
+              className="header-button"
+              onClick={toggleMenu}
+              aria-label="Account menu"
+              aria-expanded={menuOpen}
+            >
+              <div className="avatar">?</div>
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
+                style={{ top: "100%", minWidth: "160px" }}
+              >
+                <button
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  onClick={handleLogin}
+                >
+                  Login
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </header>
   );
 };
 

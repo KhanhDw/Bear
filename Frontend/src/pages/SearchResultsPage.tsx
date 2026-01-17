@@ -1,4 +1,3 @@
-import { Box, Typography, Container, Paper } from '@mui/material';
 import { useState } from 'react';
 import Header from '../components/common/Header';
 import Sidebar from '../components/common/Sidebar';
@@ -12,38 +11,23 @@ const SearchResultsPage = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <div className="app-container">
       <Header onDrawerToggle={handleDrawerToggle} />
-      <Sidebar 
-        mobileOpen={mobileOpen} 
-        handleDrawerToggle={() => setMobileOpen(!mobileOpen)} 
+      <Sidebar
+        mobileOpen={mobileOpen}
+        handleDrawerToggle={() => setMobileOpen(!mobileOpen)}
       />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${240}px)` },
-          minHeight: '100vh',
-          marginTop: '64px',
-        }}
-      >
-        <Container maxWidth="lg">
-          <Typography variant="h4" component="h1" gutterBottom>
-            Search
-          </Typography>
-          <Paper sx={{ p: 2, mb: 3 }}>
+      <main className="main-content">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6">Search</h1>
+          <div className="card mb-6">
             <SearchBar />
-          </Paper>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Search Results
-          </Typography>
-          <Typography variant="body1">
-            This is the search results page where search results will be displayed.
-          </Typography>
-        </Container>
-      </Box>
-    </Box>
+          </div>
+          <h2 className="text-xl font-bold mb-4">Search Results</h2>
+          <p>This is the search results page where search results will be displayed.</p>
+        </div>
+      </main>
+    </div>
   );
 };
 

@@ -1,19 +1,4 @@
 import React from 'react';
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardActions,
-  Avatar,
-  IconButton,
-  Typography,
-  Box,
-} from '@mui/material';
-import {
-  FavoriteBorder as LikeIcon,
-  Reply as ReplyIcon,
-  MoreVert as MoreIcon,
-} from '@mui/icons-material';
 
 interface CommentCardProps {
   id: string;
@@ -38,46 +23,43 @@ const CommentCard: React.FC<CommentCardProps> = ({
   onReply,
 }) => {
   return (
-    <Card 
-      sx={{ 
-        maxWidth: isReply ? 500 : 600, 
-        margin: isReply ? '8px 0 8px 40px' : '8px 0', 
-        boxShadow: 1,
-        border: isReply ? '1px solid #e0e0e0' : 'none'
-      }}
+    <div 
+      className={`post-card ${isReply ? 'ml-10 mt-2 mb-2 border border-gray-200' : 'mt-2 mb-2'}`}
+      style={{ maxWidth: isReply ? '500px' : '600px' }}
     >
-      <CardHeader
-        avatar={
-          <Avatar src={authorAvatar} aria-label="author">
-            {authorName.charAt(0)}
-          </Avatar>
-        }
-        action={
-          <IconButton aria-label="settings">
-            <MoreIcon />
-          </IconButton>
-        }
-        title={authorName}
-        subheader={createdAt}
-      />
-      <CardContent>
-        <Typography variant="body2" color="text.secondary">
-          {content}
-        </Typography>
-      </CardContent>
-      <CardActions disableSpacing>
-        <IconButton aria-label="like" onClick={onLike}>
-          <LikeIcon />
-        </IconButton>
-        <IconButton aria-label="reply" onClick={onReply}>
-          <ReplyIcon />
-        </IconButton>
-        <Box sx={{ flexGrow: 1 }} />
-        <Typography variant="caption" color="text.secondary">
-          {likesCount} likes
-        </Typography>
-      </CardActions>
-    </Card>
+      <div className="post-header">
+        <div className="avatar">
+          {authorName.charAt(0)}
+        </div>
+        <div>
+          <div className="post-author">{authorName}</div>
+          <div className="text-gray-500 text-sm">{createdAt}</div>
+        </div>
+        <button className="ml-auto text-gray-500 hover:text-gray-700">
+          ⋮
+        </button>
+      </div>
+      <div className="post-content">
+        {content}
+      </div>
+      <div className="post-actions">
+        <button 
+          className="flex items-center text-gray-600 hover:text-red-600"
+          onClick={onLike}
+          aria-label="like"
+        >
+          ❤️
+          <span className="ml-1">{likesCount} likes</span>
+        </button>
+        <button 
+          className="flex items-center text-gray-600 hover:text-blue-600 ml-4"
+          onClick={onReply}
+          aria-label="reply"
+        >
+          ↪️ Reply
+        </button>
+      </div>
+    </div>
   );
 };
 

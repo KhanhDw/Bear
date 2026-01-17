@@ -1,4 +1,3 @@
-import { Box, Container } from "@mui/material";
 import { useState } from "react";
 import Header from "../components/common/Header";
 import Sidebar from "../components/common/Sidebar";
@@ -14,25 +13,16 @@ const FeedPage = () => {
   };
 
   return (
-    <Box className="w-full ">
+    <div className="app-container">
       <Header onDrawerToggle={handleDrawerToggle} />
       <Sidebar
         mobileOpen={mobileOpen}
         handleDrawerToggle={() => setMobileOpen(!mobileOpen)}
       />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          width: { sm: `calc(100% - ${240}px)` },
-          minHeight: "100vh",
-          marginTop: "64px",
-        }}
-      >
-        <div className="flex items-center justify-center w-full ">
-          <Container maxWidth="lg">
-            <Box display="flex" flexDirection="column" gap={2}>
+      <main className="main-content">
+        <div className="flex items-center justify-center w-full">
+          <div className="max-w-4xl w-full">
+            <div className="flex flex-col gap-4">
               {posts.map((post) => (
                 <PostCard
                   key={post.post_id}
@@ -46,11 +36,11 @@ const FeedPage = () => {
                   comments_count={post.comments_count}
                 />
               ))}
-            </Box>
-          </Container>
+            </div>
+          </div>
         </div>
-      </Box>
-    </Box>
+      </main>
+    </div>
   );
 };
 

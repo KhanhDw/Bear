@@ -1,6 +1,7 @@
 // src/contexts/UserContext.tsx
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, type ReactNode, useEffect } from 'react';
 import type { User } from '../services/userService';
+import { mockAuthService } from '../mocks/auth';
 
 interface UserState {
   currentUser: User | null;
@@ -19,7 +20,7 @@ type UserAction =
 const initialState: UserState = {
   currentUser: null,
   isAuthenticated: false,
-  loading: false,
+  loading: true, // Start with loading true to check auth status
   error: null,
 };
 
@@ -61,6 +62,7 @@ const userReducer = (state: UserState, action: UserAction): UserState => {
       return {
         ...initialState,
         isAuthenticated: false,
+        loading: false,
       };
     default:
       return state;
@@ -74,13 +76,35 @@ interface UserProviderProps {
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(userReducer, initialState);
 
+  // Check authentication status on mount
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+        const user = await mockAuthService.getCurrentUser();
+        if (user) {
+          dispatch({ type: 'SET_USER', payload: user });
+          dispatch({ type: 'SET_AUTH_STATUS', payload: true });
+        }
+      } catch (error: any) {
+        dispatch({ type: 'SET_ERROR', payload: error.message || 'Failed to check authentication status' });
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
   const login = (user: User) => {
     dispatch({ type: 'SET_USER', payload: user });
     dispatch({ type: 'SET_AUTH_STATUS', payload: true });
     dispatch({ type: 'SET_ERROR', payload: null });
+    mockAuthService.setCurrentUser(user); // Update mock auth service
   };
 
   const logout = () => {
+    mockAuthService.logout(); // Clear mock auth service
     dispatch({ type: 'LOGOUT' });
   };
 
@@ -88,6 +112,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     if (state.currentUser) {
       const updatedUser = { ...state.currentUser, ...userData };
       dispatch({ type: 'SET_USER', payload: updatedUser });
+      mockAuthService.setCurrentUser(updatedUser); // Update mock auth service
     }
   };
 

@@ -1,19 +1,4 @@
-import React, { useState } from 'react';
-import {
-  Paper,
-  InputBase,
-  IconButton,
-  Divider,
-  Popper,
-  ClickAwayListener,
-  Box,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Avatar,
-} from '@mui/material';
-import { Search as SearchIcon, Close as CloseIcon } from '@mui/icons-material';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface SearchResult {
@@ -33,6 +18,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, searchResults = [] }) =
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const searchBarRef = useRef<HTMLDivElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +32,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, searchResults = [] }) =
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    
+
     // Only show results if there's a query and results available
     if (value.trim() && searchResults.length > 0) {
       setOpen(true);
@@ -70,80 +56,88 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, searchResults = [] }) =
     setOpen(false);
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <Box sx={{ position: 'relative', width: '100%' }}>
-      <Paper
-        component="form"
+    <div className="relative w-full" ref={searchBarRef}>
+      <form 
         onSubmit={handleSearch}
-        sx={{
-          p: '2px 4px',
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        }}
+        className="flex items-center w-full border border-gray-300 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
       >
-        <IconButton sx={{ p: '10px' }} aria-label="search">
-          <SearchIcon />
-        </IconButton>
-        <InputBase
-          sx={{ ml: 1, flex: 1 }}
+        <button 
+          type="submit"
+          className="p-3 text-gray-500 hover:text-gray-700"
+          aria-label="search"
+        >
+          🔍
+        </button>
+        <input
+          type="text"
           placeholder="Search posts, people..."
-          inputProps={{ 'aria-label': 'search' }}
+          className="flex-1 p-2 outline-none"
           value={query}
           onChange={handleInputChange}
           onFocus={() => query && searchResults.length > 0 && setOpen(true)}
         />
         {query && (
-          <IconButton 
-            sx={{ p: '10px' }} 
-            aria-label="clear" 
+          <button
+            type="button"
+            className="p-3 text-gray-500 hover:text-gray-700"
             onClick={clearSearch}
+            aria-label="clear"
           >
-            <CloseIcon />
-          </IconButton>
+            ✕
+          </button>
         )}
-      </Paper>
+      </form>
 
-      <Popper
-        open={open}
-        anchorEl={document.querySelector('form') as Element}
-        placement="bottom-start"
-        style={{ width: '100%', zIndex: 1000 }}
-      >
-        <ClickAwayListener onClickAway={() => setOpen(false)}>
-          <Paper sx={{ width: '100%', maxHeight: 300, overflow: 'auto' }}>
-            <List>
-              {searchResults.length > 0 ? (
-                searchResults.map((result) => (
-                  <ListItem 
-                    component="div"
-                    key={result.id} 
-                    onClick={() => handleResultClick(result)}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <ListItemAvatar>
-                      <Avatar src={result.avatar} />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={result.title}
-                      secondary={result.subtitle}
-                    />
-                  </ListItem>
-                ))
-              ) : (
-                <ListItem component="div">
-                  <ListItemText primary="No results found" />
-                </ListItem>
-              )}
-            </List>
-            <Divider />
-            <ListItem component="div" sx={{ cursor: 'pointer' }} onClick={() => navigate(`/search?q=${encodeURIComponent(query)}`)}>
-                        <ListItemText primary={`See all results for "${query}"`} />
-                      </ListItem>          </Paper>
-        </ClickAwayListener>
-      </Popper>
-    </Box>
+      {open && (
+        <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-80 overflow-auto">
+          <ul>
+            {searchResults.length > 0 ? (
+              searchResults.map((result) => (
+                <li 
+                  key={result.id}
+                  className="p-3 hover:bg-gray-100 cursor-pointer flex items-center"
+                  onClick={() => handleResultClick(result)}
+                >
+                  {result.avatar && (
+                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
+                      <img src={result.avatar} alt={result.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-medium">{result.title}</div>
+                    {result.subtitle && <div className="text-sm text-gray-600">{result.subtitle}</div>}
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li className="p-3 text-gray-600">No results found</li>
+            )}
+          </ul>
+          <hr />
+          <li 
+            className="p-3 hover:bg-gray-100 cursor-pointer"
+            onClick={() => navigate(`/search?q=${encodeURIComponent(query)}`)}
+          >
+            See all results for "{query}"
+          </li>
+        </div>
+      )}
+    </div>
   );
 };
 
