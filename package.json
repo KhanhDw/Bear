@@ -5,6 +5,7 @@
   "workspaces": [
     "Frontend_Module_Federation/app/*",
     "Frontend",
+    "Backend/gateway",
     "Backend/services/*",
     "Backend/consumers/*",
     "Backend/libs/*"
@@ -22,6 +23,7 @@
     "--------------------": "",
     "build:B:post": "npm --workspace Backend/services/post-service run build",
     "---------------------": "",
+    "localdev:B:gateway": "npm --workspace Backend/gateway run dev",
     "localdev:B:post": "npm --workspace Backend/services/post-service run dev",
     "localdev:B:user": "npm --workspace Backend/services/user-service run dev",
     "localdev:B:search": "npm --workspace Backend/services/search-service run dev",

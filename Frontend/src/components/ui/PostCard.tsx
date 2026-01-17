@@ -1,87 +1,100 @@
-import React from 'react';
+import React from "react";
 import {
   Card,
   CardHeader,
-  CardMedia,
   CardContent,
   CardActions,
   Avatar,
   IconButton,
   Typography,
-  Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
-  FavoriteBorder as LikeIcon,
+  ThumbUp as UpVoteIcon,
+  ThumbDown as DownVoteIcon,
   ChatBubbleOutline as CommentIcon,
-  Share as ShareIcon,
-  MoreVert as MoreIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 interface PostCardProps {
-  id: string;
-  authorName: string;
-  authorAvatar: string;
-  content: string;
-  imageUrl?: string;
-  likesCount: number;
-  commentsCount: number;
-  createdAt: string;
-  onLike?: () => void;
+  post_id: string;
+  post_content: string;
+  post_author_id: string;
+  post_author_name: string;
+  post_created_at: string;
+  upvotes: number;
+  downvotes: number;
+  comments_count: number;
+  onUpvote?: () => void;
+  onDownvote?: () => void;
   onComment?: () => void;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
-  authorName,
-  authorAvatar,
-  content,
-  imageUrl,
-  likesCount,
-  commentsCount,
-  createdAt,
-  onLike,
+  post_id,
+  post_content,
+  post_author_id,
+  post_author_name,
+  post_created_at,
+  upvotes,
+  downvotes,
+  comments_count,
+  onUpvote,
+  onDownvote,
   onComment,
 }) => {
   return (
-    <Card sx={{ maxWidth: 600, margin: '16px auto', boxShadow: 3 }}>
+    <Card
+      sx={{ margin: "16px auto", boxShadow: 3 }}
+      className="w-120"
+    >
       <CardHeader
-        avatar={
-          <Avatar src={authorAvatar} aria-label="author">
-            {authorName.charAt(0)}
-          </Avatar>
-        }
-        action={
-          <IconButton aria-label="settings">
-            <MoreIcon />
-          </IconButton>
-        }
-        title={authorName}
-        subheader={createdAt}
+        avatar={<Avatar>{post_author_name.charAt(0).toUpperCase()}</Avatar>}
+        title={post_author_name}
+        subheader={post_created_at}
       />
+      <div className="hidden">
+        <p>{post_id}</p>
+        <p>{post_author_id}</p>
+      </div>
       <CardContent>
-        <Typography variant="body2" color="text.secondary">
-          {content}
+        <Typography
+          variant="body2"
+          color="text.primary"
+        >
+          {post_content}
         </Typography>
       </CardContent>
-      {imageUrl && (
-        <CardMedia
-          component="img"
-          height="300"
-          image={imageUrl}
-          alt="Post content"
-        />
-      )}
-      <CardActions disableSpacing>
-        <IconButton aria-label="like" onClick={onLike}>
-          <LikeIcon />
+      <CardActions>
+        <IconButton
+          aria-label="upvote"
+          onClick={onUpvote}
+        >
+          <UpVoteIcon />
         </IconButton>
-        <IconButton aria-label="comment" onClick={onComment}>
+        <Typography
+          variant="caption"
+          sx={{ mr: 1 }}
+        >
+          {upvotes}
+        </Typography>
+        <IconButton
+          aria-label="downvote"
+          onClick={onDownvote}
+        >
+          <DownVoteIcon />
+        </IconButton>
+        <Typography
+          variant="caption"
+          sx={{ mr: 2 }}
+        >
+          {downvotes}
+        </Typography>
+        <IconButton
+          aria-label="comment"
+          onClick={onComment}
+        >
           <CommentIcon />
         </IconButton>
-        <IconButton aria-label="share">
-          <ShareIcon />
-        </IconButton>
-        <Chip label={`${likesCount} likes`} size="small" />
-        <Chip label={`${commentsCount} comments`} size="small" sx={{ ml: 1 }} />
+        <Typography variant="caption">{comments_count} comments</Typography>
       </CardActions>
     </Card>
   );

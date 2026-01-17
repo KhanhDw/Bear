@@ -1,35 +1,41 @@
-# run file: docker composer up
+# Docker Compose configuration for the complete microservices architecture
+# run file: docker compose up
 # thêm -d để chạy nền
 # thêm logs -f vào để xem logs chạy nền:
-# => docker compose -f docker-compose.dev.yml logs -f post-service
-# chạy nền và  không build lại
-# docker compose -f docker-compose.dev.yml --profile api up -d --no-build post-service
+# => docker compose logs -f post-service
+# chạy nền và không build lại
+# docker compose up -d --no-build post-service
 
-# run this file: docker compose -f docker-compose.dev.yml up
+# run this file: docker compose up
 
 # Chạy đúng 1 service theo profile
-# docker compose -f docker-compose.dev.yml --profile api up post-service
+# docker compose --profile api up post-service
 
 # Chạy tất cả service thuộc profile api
-# docker compose -f docker-compose.dev.yml --profile api up
+# docker compose --profile api up
 
 # Chạy nền
-# docker compose -f docker-compose.dev.yml --profile api up -d
+# docker compose --profile api up -d
 
 # Xem log
-# docker compose -f docker-compose.dev.yml logs -f post-service
+# docker compose logs -f post-service
 
 # run nhiều profile cùng lúc
-# docker compose -f docker-compose.dev.yml --profile infra --profile api up -d --no-build
+# docker compose --profile infra --profile api up -d --no-build
 
-# access postgres to write database: docker exec -it postgres_db psql -U root -d root
+# access postgres to write database: docker exec -it postgres_db psql -U root -d bear
 
 # call logs : docker logs -f bear-post-service
 # call logs : docker logs -f postgres_db
 # call logs : docker logs -f kafka
 # test kafka: kcat -b localhost:29092 -L
 
+version: "3.9"
+
 services:
+  # ======================
+  # INFRASTRUCTURE SERVICES
+  # ======================
   postgres:
     image: postgres:15
     container_name: postgres_db
@@ -50,33 +56,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - backend
-
-  post-service:
-    build:
-      context: Backend/services/post-service
-      dockerfile: Dockerfile.dev
-    container_name: bear-post-service
-    working_dir: /app
-    volumes:
-      - ./Backend/services/post-service:/app:cached
-      - /app/node_modules
-    profiles: ["api"]
-    command: npm run dev
-    ports:
-      - "3000:3000"
-    env_file:
-      - Backend/services/post-service/.env
-    restart: unless-stopped
-    networks:
-      - backend
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka-service:
-        condition: service_healthy
-    environment:
-      - KAFKA_BROKER=kafka-service:9092
-      - KAFKAJS_NO_PARTITIONER_WARNING=1
 
   kafka-service:
     image: apache/kafka:4.1.1
@@ -110,6 +89,151 @@ services:
     restart: unless-stopped
     networks:
       - backend
+
+  # ======================
+  # MICROSERVICES
+  # ======================
+  user-service:
+    build:
+      context: ./Backend/services/user-service
+      dockerfile: Dockerfile.dev
+    container_name: bear-user-service
+    working_dir: /app
+    volumes:
+      - ./Backend/services/user-service:/app:cached
+      - /app/node_modules
+    profiles: ["api"]
+    command: npm run dev
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./Backend/services/user-service/.env
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-service:
+        condition: service_healthy
+    environment:
+      - KAFKA_BROKER=kafka-service:9092
+      - KAFKAJS_NO_PARTITIONER_WARNING=1
+      - SERVICE_NAME=user-service
+
+  post-service:
+    build:
+      context: ./Backend/services/post-service
+      dockerfile: Dockerfile.dev
+    container_name: bear-post-service
+    working_dir: /app
+    volumes:
+      - ./Backend/services/post-service:/app:cached
+      - /app/node_modules
+    profiles: ["api"]
+    command: npm run dev
+    ports:
+      - "3003:3003"  # Changed to port 3003 to match the gateway configuration
+    env_file:
+      - ./Backend/services/post-service/.env
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-service:
+        condition: service_healthy
+    environment:
+      - KAFKA_BROKER=kafka-service:9092
+      - KAFKAJS_NO_PARTITIONER_WARNING=1
+      - SERVICE_NAME=post-service
+
+  comment-service:
+    build:
+      context: ./Backend/services/comment-service
+      dockerfile: Dockerfile.dev
+    container_name: bear-comment-service
+    working_dir: /app
+    volumes:
+      - ./Backend/services/comment-service:/app:cached
+      - /app/node_modules
+    profiles: ["api"]
+    command: npm run dev
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./Backend/services/comment-service/.env
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-service:
+        condition: service_healthy
+    environment:
+      - KAFKA_BROKER=kafka-service:9092
+      - KAFKAJS_NO_PARTITIONER_WARNING=1
+      - SERVICE_NAME=comment-service
+
+  search-service:
+    build:
+      context: ./Backend/services/search-service
+      dockerfile: Dockerfile.dev
+    container_name: bear-search-service
+    working_dir: /app
+    volumes:
+      - ./Backend/services/search-service:/app:cached
+      - /app/node_modules
+    profiles: ["api"]
+    command: npm run dev
+    ports:
+      - "3004:3004"
+    env_file:
+      - ./Backend/services/search-service/.env
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-service:
+        condition: service_healthy
+    environment:
+      - KAFKA_BROKER=kafka-service:9092
+      - KAFKAJS_NO_PARTITIONER_WARNING=1
+      - SERVICE_NAME=search-service
+
+  # ======================
+  # API GATEWAY
+  # ======================
+  gateway:
+    build:
+      context: ./Backend/gateway
+      dockerfile: Dockerfile.dev
+    container_name: bear-gateway
+    working_dir: /app
+    volumes:
+      - ./Backend/gateway:/app:cached
+      - /app/node_modules
+    profiles: ["api"]
+    command: npm run dev
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./Backend/gateway/.env
+    restart: unless-stopped
+    networks:
+      - backend
+    depends_on:
+      - user-service
+      - post-service
+      - comment-service
+      - search-service
+    environment:
+      - SERVICE_NAME=gateway
+      - JWT_SECRET=${JWT_SECRET:-supersecretkey}
 
 volumes:
   postgres_data:

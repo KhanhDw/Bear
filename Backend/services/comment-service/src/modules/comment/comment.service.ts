@@ -8,6 +8,11 @@ import {
   updateComment,
   deleteComment,
 } from "./comment.repository.js";
+import {
+  publishCommentCreated,
+  publishCommentUpdated,
+  publishCommentDeleted,
+} from "./comment.events.js";
 
 /* =======================
    CREATE
@@ -15,7 +20,18 @@ import {
 export const createCommentService = async (
   input: CreateCommentInput
 ): Promise<Comment> => {
-  return insertComment(input);
+  const comment = await insertComment(input);
+
+  // emit event (fire-and-forget)
+  publishCommentCreated({
+    comment_id: comment.comment_id,
+    content: comment.content,
+    user_id: comment.user_id,
+    post_id: comment.post_id,
+    comment_created_at: comment.comment_created_at
+  }).catch(console.error);
+
+  return comment;
 };
 
 /* =======================
@@ -63,7 +79,18 @@ export const updateCommentService = async (
 
   if (!comment) return null;
 
-  return updateComment(comment_id, input);
+  const updatedComment = await updateComment(comment_id, input);
+
+  // emit event (fire-and-forget)
+  if (updatedComment) {
+    publishCommentUpdated({
+      comment_id: updatedComment.comment_id,
+      content: updatedComment.content,
+      user_id: updatedComment.user_id
+    }).catch(console.error);
+  }
+
+  return updatedComment;
 };
 
 /* =======================
@@ -74,5 +101,15 @@ export const deleteCommentService = async (comment_id: string): Promise<boolean>
 
   if (!comment) return false;
 
-  return deleteComment(comment_id);
+  const result = await deleteComment(comment_id);
+
+  if (result) {
+    // emit event (fire-and-forget)
+    publishCommentDeleted({
+      comment_id: comment.comment_id,
+      user_id: comment.user_id
+    }).catch(console.error);
+  }
+
+  return result;
 };

@@ -1,153 +1,140 @@
 import { SearchResult, SearchInput } from "./search.types.js";
 import { pool } from "../../db/db.js";
 
+// Initialize search index table if it doesn't exist
+export const initializeSearchIndex = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS search_index (
+      id SERIAL PRIMARY KEY,
+      entity_id VARCHAR(255) NOT NULL,
+      entity_type VARCHAR(50) NOT NULL, -- 'post', 'user', 'comment'
+      content TEXT,
+      title TEXT,
+      author VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Create indexes for better performance
+    CREATE INDEX IF NOT EXISTS idx_search_entity ON search_index(entity_id, entity_type);
+    CREATE INDEX IF NOT EXISTS idx_search_type ON search_index(entity_type);
+    CREATE INDEX IF NOT EXISTS idx_search_content_gin ON search_index USING gin(to_tsvector('english', COALESCE(content, '') || ' ' || COALESCE(title, '')));
+  `);
+};
+
+/* INDEX ENTITY FOR SEARCH */
+export const indexEntity = async (
+  entityId: string,
+  entityType: string,
+  content: string,
+  title?: string,
+  author?: string
+): Promise<void> => {
+  const existingRecord = await pool.query(
+    'SELECT id FROM search_index WHERE entity_id = $1 AND entity_type = $2',
+    [entityId, entityType]
+  );
+
+  if (existingRecord.rows.length > 0) {
+    // Update existing record
+    await pool.query(
+      `
+      UPDATE search_index
+      SET content = $3, title = $4, author = $5, updated_at = CURRENT_TIMESTAMP
+      WHERE entity_id = $1 AND entity_type = $2
+      `,
+      [entityId, entityType, content, title, author]
+    );
+  } else {
+    // Insert new record
+    await pool.query(
+      `
+      INSERT INTO search_index (entity_id, entity_type, content, title, author)
+      VALUES ($1, $2, $3, $4, $5)
+      `,
+      [entityId, entityType, content, title, author]
+    );
+  }
+};
+
+/* REMOVE ENTITY FROM SEARCH INDEX */
+export const removeEntityFromIndex = async (entityId: string, entityType: string): Promise<void> => {
+  await pool.query(
+    'DELETE FROM search_index WHERE entity_id = $1 AND entity_type = $2',
+    [entityId, entityType]
+  );
+};
+
 /* SEARCH */
 export const searchAll = async ({ query, type = "all", limit = 20, offset = 0 }: SearchInput): Promise<SearchResult[]> => {
   const results: SearchResult[] = [];
-  
-  // Search posts
-  if (type === "all" || type === "post") {
-    const postResults = await pool.query(
-      `
-      SELECT 
-        post_id as id,
-        'post' as type,
-        post_content as content,
-        post_author_id as author,
-        post_created_at as created_at,
-        ts_rank(to_tsvector('english', post_content), plainto_tsquery('english', $1)) as score
-      FROM post
-      WHERE to_tsvector('english', post_content) @@ plainto_tsquery('english', $1)
-      ORDER BY score DESC
-      LIMIT $2 OFFSET $3
-      `,
-      [query, limit, offset]
-    );
-    
-    results.push(...postResults.rows.map(row => ({
-      id: row.id,
-      type: row.type,
-      content: row.content,
-      author: row.author,
-      created_at: row.created_at,
-      score: row.score
-    })));
+
+  // Build the search query based on type
+  let whereClause = '';
+  const params: any[] = [query];
+
+  if (type === "all") {
+    whereClause = "WHERE to_tsvector('english', COALESCE(content, '') || ' ' || COALESCE(title, '')) @@ plainto_tsquery('english', $1)";
+  } else if (type === "post" || type === "user" || type === "comment") {
+    whereClause = "WHERE entity_type = $2 AND to_tsvector('english', COALESCE(content, '') || ' ' || COALESCE(title, '')) @@ plainto_tsquery('english', $1)";
+    params.push(type); // Add type as second parameter
   }
-  
-  // Search users
-  if (type === "all" || type === "user") {
-    const userResults = await pool.query(
-      `
-      SELECT 
-        user_id as id,
-        'user' as type,
-        username as title,
-        email as content,
-        username as author,
-        user_created_at as created_at,
-        ts_rank(to_tsvector('english', username || ' ' || email), plainto_tsquery('english', $1)) as score
-      FROM users
-      WHERE to_tsvector('english', username || ' ' || email) @@ plainto_tsquery('english', $1)
-      ORDER BY score DESC
-      LIMIT $2 OFFSET $3
-      `,
-      [query, limit, offset]
-    );
-    
-    results.push(...userResults.rows.map(row => ({
-      id: row.id,
-      type: row.type,
-      title: row.title,
-      content: row.content,
-      author: row.author,
-      created_at: row.created_at,
-      score: row.score
-    })));
-  }
-  
-  // Search comments
-  if (type === "all" || type === "comment") {
-    const commentResults = await pool.query(
-      `
-      SELECT 
-        comment_id as id,
-        'comment' as type,
-        content,
-        user_id as author,
-        comment_created_at as created_at,
-        ts_rank(to_tsvector('english', content), plainto_tsquery('english', $1)) as score
-      FROM comments
-      WHERE to_tsvector('english', content) @@ plainto_tsquery('english', $1)
-      ORDER BY score DESC
-      LIMIT $2 OFFSET $3
-      `,
-      [query, limit, offset]
-    );
-    
-    results.push(...commentResults.rows.map(row => ({
-      id: row.id,
-      type: row.type,
-      content: row.content,
-      author: row.author,
-      created_at: row.created_at,
-      score: row.score
-    })));
-  }
-  
-  // Sort all results by score if available, otherwise by creation date
-  results.sort((a, b) => {
-    if (a.score !== undefined && b.score !== undefined) {
-      return b.score - a.score; // Higher score first
-    }
-    if (a.created_at && b.created_at) {
-      return b.created_at.getTime() - a.created_at.getTime(); // Newest first
-    }
-    return 0;
-  });
-  
-  // Limit the final results
+
+  // Add limit and offset parameters
+  const limitParamIndex = params.length + 1;
+  const offsetParamIndex = params.length + 2;
+  params.push(limit, offset);
+
+  const searchQuery = `
+    SELECT
+      entity_id as id,
+      entity_type as type,
+      content,
+      title,
+      author,
+      created_at,
+      updated_at,
+      ts_rank(to_tsvector('english', COALESCE(content, '') || ' ' || COALESCE(title, '')), plainto_tsquery('english', $1)) as score
+    FROM search_index
+    ${whereClause}
+    ORDER BY score DESC, updated_at DESC
+    LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}
+  `;
+
+  const searchResults = await pool.query(searchQuery, params);
+
+  results.push(...searchResults.rows.map(row => ({
+    id: row.id,
+    type: row.type,
+    content: row.content,
+    title: row.title || undefined,
+    author: row.author,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+    score: parseFloat(row.score)
+  })));
+
   return results.slice(0, limit);
 };
 
 /* COUNT SEARCH RESULTS */
 export const countSearchResults = async ({ query, type = "all" }: SearchInput): Promise<number> => {
-  let totalCount = 0;
-  
-  if (type === "all" || type === "post") {
-    const postCount = await pool.query(
-      `
-      SELECT COUNT(*) as count
-      FROM post
-      WHERE to_tsvector('english', post_content) @@ plainto_tsquery('english', $1)
-      `,
-      [query]
-    );
-    totalCount += parseInt(postCount.rows[0].count);
+  let whereClause = '';
+  const params: any[] = [query];
+
+  if (type === "all") {
+    whereClause = "WHERE to_tsvector('english', COALESCE(content, '') || ' ' || COALESCE(title, '')) @@ plainto_tsquery('english', $1)";
+  } else if (type === "post" || type === "user" || type === "comment") {
+    whereClause = "WHERE entity_type = $2 AND to_tsvector('english', COALESCE(content, '') || ' ' || COALESCE(title, '')) @@ plainto_tsquery('english', $1)";
+    params.push(type); // Add type as second parameter
   }
-  
-  if (type === "all" || type === "user") {
-    const userCount = await pool.query(
-      `
-      SELECT COUNT(*) as count
-      FROM users
-      WHERE to_tsvector('english', username || ' ' || email) @@ plainto_tsquery('english', $1)
-      `,
-      [query]
-    );
-    totalCount += parseInt(userCount.rows[0].count);
-  }
-  
-  if (type === "all" || type === "comment") {
-    const commentCount = await pool.query(
-      `
-      SELECT COUNT(*) as count
-      FROM comments
-      WHERE to_tsvector('english', content) @@ plainto_tsquery('english', $1)
-      `,
-      [query]
-    );
-    totalCount += parseInt(commentCount.rows[0].count);
-  }
-  
-  return totalCount;
+
+  const countQuery = `
+    SELECT COUNT(*) as count
+    FROM search_index
+    ${whereClause}
+  `;
+
+  const result = await pool.query(countQuery, params);
+  return parseInt(result.rows[0].count);
 };

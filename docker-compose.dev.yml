@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   # ======================
-  # INFRA
+  # INFRASTRUCTURE SERVICES
   # ======================
   postgres:
     image: postgres:15
@@ -31,14 +31,16 @@ services:
     profiles: ["infra"]
     ports:
       - "29092:29092"
+      - "9092:9092"
+      - "9093:9093"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-service:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-service:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -55,39 +57,186 @@ services:
       - backend
 
   # ======================
-  # API SERVICES
+  # MICROSERVICES
   # ======================
-  post-service:
-    container_name: bear-post-service
+  user-service:
+    container_name: bear-user-service
     profiles: ["api"]
 
     build:
-      context: ./backend/services/post-service
+      context: ./Backend/services/user-service
       dockerfile: Dockerfile.dev
 
     command: npm run dev
 
     volumes:
       # mount source code → hot reload
-      - ./backend/services/post-service:/app
-      # giữ node_modules trong container
+      - ./Backend/services/user-service:/app
+      # keep node_modules in container
       - /app/node_modules
 
     ports:
-      - "3001:3000"
+      - "3001:3001"
 
     env_file:
-      - ./backend/services/post-service/.env
+      - ./Backend/services/user-service/.env
 
     environment:
-      SERVICE_NAME: post-service
-      KAFKA_BROKER: kafka:9092
+      SERVICE_NAME: user-service
+      KAFKA_BROKER: kafka-service:9092
 
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
+      kafka-service:
         condition: service_healthy
+
+    restart: unless-stopped
+    networks:
+      - backend
+
+  post-service:
+    container_name: bear-post-service
+    profiles: ["api"]
+
+    build:
+      context: ./Backend/services/post-service
+      dockerfile: Dockerfile.dev
+
+    command: npm run dev
+
+    volumes:
+      # mount source code → hot reload
+      - ./Backend/services/post-service:/app
+      # keep node_modules in container
+      - /app/node_modules
+
+    ports:
+      - "3003:3003"  # Changed to port 3003 to match the gateway configuration
+
+    env_file:
+      - ./Backend/services/post-service/.env
+
+    environment:
+      SERVICE_NAME: post-service
+      KAFKA_BROKER: kafka-service:9092
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-service:
+        condition: service_healthy
+
+    restart: unless-stopped
+    networks:
+      - backend
+
+  comment-service:
+    container_name: bear-comment-service
+    profiles: ["api"]
+
+    build:
+      context: ./Backend/services/comment-service
+      dockerfile: Dockerfile.dev
+
+    command: npm run dev
+
+    volumes:
+      # mount source code → hot reload
+      - ./Backend/services/comment-service:/app
+      # keep node_modules in container
+      - /app/node_modules
+
+    ports:
+      - "3002:3002"
+
+    env_file:
+      - ./Backend/services/comment-service/.env
+
+    environment:
+      SERVICE_NAME: comment-service
+      KAFKA_BROKER: kafka-service:9092
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-service:
+        condition: service_healthy
+
+    restart: unless-stopped
+    networks:
+      - backend
+
+  search-service:
+    container_name: bear-search-service
+    profiles: ["api"]
+
+    build:
+      context: ./Backend/services/search-service
+      dockerfile: Dockerfile.dev
+
+    command: npm run dev
+
+    volumes:
+      # mount source code → hot reload
+      - ./Backend/services/search-service:/app
+      # keep node_modules in container
+      - /app/node_modules
+
+    ports:
+      - "3004:3004"
+
+    env_file:
+      - ./Backend/services/search-service/.env
+
+    environment:
+      SERVICE_NAME: search-service
+      KAFKA_BROKER: kafka-service:9092
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-service:
+        condition: service_healthy
+
+    restart: unless-stopped
+    networks:
+      - backend
+
+  # ======================
+  # API GATEWAY
+  # ======================
+  gateway:
+    container_name: bear-gateway
+    profiles: ["api"]
+
+    build:
+      context: ./Backend/gateway
+      dockerfile: Dockerfile.dev
+
+    command: npm run dev
+
+    volumes:
+      # mount source code → hot reload
+      - ./Backend/gateway:/app
+      # keep node_modules in container
+      - /app/node_modules
+
+    ports:
+      - "8080:8080"
+
+    env_file:
+      - ./Backend/gateway/.env
+
+    environment:
+      SERVICE_NAME: gateway
+      JWT_SECRET: ${JWT_SECRET:-supersecretkey}
+
+    depends_on:
+      - user-service
+      - post-service
+      - comment-service
+      - search-service
 
     restart: unless-stopped
     networks:

@@ -1,0 +1,1009 @@
+# Bear Social Media Platform API Specification
+
+# This document describes all available APIs in the Bear microservices architecture
+# All requests go through the API Gateway which proxies to individual services
+
+openapi: 3.0.0
+info:
+  title: Bear Social Media Platform API
+  description: Comprehensive API specification for the Bear social media platform microservices
+  version: 1.0.0
+  contact:
+    name: Bear Development Team
+
+servers:
+  - url: http://localhost:4000
+    description: Local development gateway server
+
+# The gateway proxies requests to individual services:
+# - Posts: http://localhost:3000 (proxied via /posts)
+# - Users: http://localhost:3001 (proxied via /users)  
+# - Comments: http://localhost:3002 (proxied via /comments)
+# - Search: http://localhost:3004 (proxied via /search)
+
+tags:
+  - name: Posts
+    description: Operations related to posts
+  - name: Users
+    description: Operations related to users
+  - name: Comments
+    description: Operations related to comments
+  - name: Search
+    description: Search functionality
+  - name: Votes
+    description: Voting functionality
+  - name: Feed
+    description: User feed functionality
+  - name: Health
+    description: Service health checks
+
+paths:
+  # POST SERVICE ENDPOINTS
+  /posts:
+    get:
+      tags: [Posts]
+      summary: Get all posts
+      description: Retrieve a list of all posts
+      responses:
+        '200':
+          description: Successful response with list of posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+    post:
+      tags: [Posts]
+      summary: Create a new post
+      description: Create a new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - post_content
+                - post_author_id
+              properties:
+                post_content:
+                  type: string
+                  description: Content of the post
+                post_author_id:
+                  type: number
+                  description: ID of the post author
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+
+  /posts/{id}:
+    get:
+      tags: [Posts]
+      summary: Get post by ID
+      description: Retrieve a specific post by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Post ID
+      responses:
+        '200':
+          description: Successful response with post details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+    put:
+      tags: [Posts]
+      summary: Update a post
+      description: Update an existing post
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Post ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                post_content:
+                  type: string
+                  description: Updated content of the post
+      responses:
+        '200':
+          description: Post updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+    delete:
+      tags: [Posts]
+      summary: Delete a post
+      description: Delete a specific post by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Post ID
+      responses:
+        '200':
+          description: Post deleted successfully
+
+  # USER SERVICE ENDPOINTS
+  /users:
+    get:
+      tags: [Users]
+      summary: Get all users
+      description: Retrieve a list of all users
+      responses:
+        '200':
+          description: Successful response with list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      tags: [Users]
+      summary: Create a new user
+      description: Register a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  description: Username for the new user
+                email:
+                  type: string
+                  format: email
+                  description: Email address for the new user
+                password:
+                  type: string
+                  minLength: 6
+                  description: Password for the new user
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      description: Retrieve a specific user by their ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      responses:
+        '200':
+          description: Successful response with user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      tags: [Users]
+      summary: Update a user
+      description: Update an existing user's information
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Updated username
+                email:
+                  type: string
+                  format: email
+                  description: Updated email address
+                password:
+                  type: string
+                  minLength: 6
+                  description: Updated password
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      tags: [Users]
+      summary: Delete a user
+      description: Delete a specific user by their ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      responses:
+        '200':
+          description: User deleted successfully
+
+  # COMMENT SERVICE ENDPOINTS
+  /comments:
+    get:
+      tags: [Comments]
+      summary: Get all comments
+      description: Retrieve a list of all comments
+      responses:
+        '200':
+          description: Successful response with list of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+    post:
+      tags: [Comments]
+      summary: Create a new comment
+      description: Create a new comment on a post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - post_id
+                - user_id
+                - content
+              properties:
+                post_id:
+                  type: string
+                  description: ID of the post being commented on
+                user_id:
+                  type: string
+                  description: ID of the user making the comment
+                content:
+                  type: string
+                  description: Content of the comment
+      responses:
+        '201':
+          description: Comment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /comments/by-post:
+    get:
+      tags: [Comments]
+      summary: Get comments by post
+      description: Retrieve all comments for a specific post
+      parameters:
+        - name: post_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the post to get comments for
+      responses:
+        '200':
+          description: Successful response with list of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+
+  /comments/by-user:
+    get:
+      tags: [Comments]
+      summary: Get comments by user
+      description: Retrieve all comments made by a specific user
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the user to get comments for
+      responses:
+        '200':
+          description: Successful response with list of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+
+  /comments/{id}:
+    get:
+      tags: [Comments]
+      summary: Get comment by ID
+      description: Retrieve a specific comment by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Comment ID
+      responses:
+        '200':
+          description: Successful response with comment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+    put:
+      tags: [Comments]
+      summary: Update a comment
+      description: Update an existing comment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Comment ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: Updated content of the comment
+      responses:
+        '200':
+          description: Comment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+    delete:
+      tags: [Comments]
+      summary: Delete a comment
+      description: Delete a specific comment by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Comment ID
+      responses:
+        '200':
+          description: Comment deleted successfully
+
+  # SEARCH SERVICE ENDPOINTS
+  /search:
+    get:
+      tags: [Search]
+      summary: Search across all entities
+      description: Search for posts, users, and comments
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [post, user, comment, all]
+            default: all
+          description: Type of entity to search for
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "20"
+          description: Maximum number of results to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "0"
+          description: Number of results to skip
+      responses:
+        '200':
+          description: Successful search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum: [post, user, comment]
+                        data:
+                          type: object
+                  total:
+                    type: number
+                    description: Total number of results
+
+  # VOTE SERVICE ENDPOINTS
+  /votes:
+    get:
+      tags: [Votes]
+      summary: Get all votes
+      description: Retrieve a list of all votes
+      responses:
+        '200':
+          description: Successful response with list of votes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vote'
+    post:
+      tags: [Votes]
+      summary: Create or update a vote
+      description: Create or update a vote for an entity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteInput'
+      responses:
+        '200':
+          description: Vote created or updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+
+  /votes/by-user-entity:
+    get:
+      tags: [Votes]
+      summary: Get vote by user and entity
+      description: Retrieve a specific vote by user and entity
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the user
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the entity being voted on
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [post, comment]
+          description: Type of entity being voted on
+      responses:
+        '200':
+          description: Successful response with vote details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+
+  /votes/by-user:
+    get:
+      tags: [Votes]
+      summary: Get votes by user
+      description: Retrieve all votes made by a specific user
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the user
+      responses:
+        '200':
+          description: Successful response with list of votes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vote'
+
+  /votes/by-entity:
+    get:
+      tags: [Votes]
+      summary: Get votes by entity
+      description: Retrieve all votes for a specific entity
+      parameters:
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the entity
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [post, comment]
+          description: Type of entity
+      responses:
+        '200':
+          description: Successful response with list of votes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vote'
+
+  /votes/counts:
+    get:
+      tags: [Votes]
+      summary: Get vote counts by entity
+      description: Retrieve vote counts for entities
+      parameters:
+        - name: entity_ids
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Comma-separated list of entity IDs
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [post, comment]
+          description: Type of entity
+      responses:
+        '200':
+          description: Successful response with vote counts
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    upvotes:
+                      type: number
+                    downvotes:
+                      type: number
+
+  /votes/{id}:
+    get:
+      tags: [Votes]
+      summary: Get vote by ID
+      description: Retrieve a specific vote by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Vote ID
+      responses:
+        '200':
+          description: Successful response with vote details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+    put:
+      tags: [Votes]
+      summary: Update a vote
+      description: Update an existing vote
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Vote ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteInput'
+      responses:
+        '200':
+          description: Vote updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vote'
+    delete:
+      tags: [Votes]
+      summary: Delete a vote
+      description: Delete a specific vote by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Vote ID
+      responses:
+        '200':
+          description: Vote deleted successfully
+
+  /votes/by-user-entity:
+    delete:
+      tags: [Votes]
+      summary: Delete vote by user and entity
+      description: Delete a specific vote by user and entity
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the user
+        - name: entity_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the entity being voted on
+        - name: entity_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [post, comment]
+          description: Type of entity being voted on
+      responses:
+        '200':
+          description: Vote deleted successfully
+
+  # FEED SERVICE ENDPOINTS
+  /feed:
+    get:
+      tags: [Feed]
+      summary: Get user feed
+      description: Retrieve the feed for a specific user
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: ID of the user whose feed to retrieve
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "20"
+          description: Maximum number of posts to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: string
+            default: "0"
+          description: Number of posts to skip
+      responses:
+        '200':
+          description: Successful response with user feed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  posts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Post'
+                  total:
+                    type: number
+                    description: Total number of posts in feed
+
+  /feed/add:
+    post:
+      tags: [Feed]
+      summary: Add post to user feed
+      description: Add a specific post to a user's feed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - post_id
+              properties:
+                user_id:
+                  type: string
+                  description: ID of the user
+                post_id:
+                  type: string
+                  description: ID of the post to add
+      responses:
+        '201':
+          description: Post added to feed successfully
+
+  /feed/remove:
+    post:
+      tags: [Feed]
+      summary: Remove post from user feed
+      description: Remove a specific post from a user's feed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - post_id
+              properties:
+                user_id:
+                  type: string
+                  description: ID of the user
+                post_id:
+                  type: string
+                  description: ID of the post to remove
+      responses:
+        '200':
+          description: Post removed from feed successfully
+
+  # HEALTH CHECK ENDPOINTS
+  /health:
+    get:
+      tags: [Health]
+      summary: Gateway health check
+      description: Check the health status of the API gateway and connected services
+      responses:
+        '200':
+          description: Gateway health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      post:
+                        type: string
+                        example: "http://localhost:3000"
+                      user:
+                        type: string
+                        example: "http://localhost:3001"
+                      comment:
+                        type: string
+                        example: "http://localhost:3002"
+                      search:
+                        type: string
+                        example: "http://localhost:3004"
+
+  /posts/health:
+    get:
+      tags: [Health]
+      summary: Post service health check
+      description: Check the health status of the post service
+      responses:
+        '200':
+          description: Post service health status
+
+  /users/health:
+    get:
+      tags: [Health]
+      summary: User service health check
+      description: Check the health status of the user service
+      responses:
+        '200':
+          description: User service health status
+
+  /comments/health:
+    get:
+      tags: [Health]
+      summary: Comment service health check
+      description: Check the health status of the comment service
+      responses:
+        '200':
+          description: Comment service health status
+
+  /search/health:
+    get:
+      tags: [Health]
+      summary: Search service health check
+      description: Check the health status of the search service
+      responses:
+        '200':
+          description: Search service health status
+
+components:
+  schemas:
+    Post:
+      type: object
+      properties:
+        post_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the post
+        post_author_id:
+          type: string
+          description: ID of the post author
+        post_author_name:
+          type: string
+          description: Name of the post author
+        post_content:
+          type: string
+          description: Content of the post
+        post_created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp of the post
+        upvotes:
+          type: number
+          description: Number of upvotes for the post
+        downvotes:
+          type: number
+          description: Number of downvotes for the post
+        comments_count:
+          type: number
+          description: Number of comments on the post
+
+    User:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the user
+        username:
+          type: string
+          description: Username of the user
+        email:
+          type: string
+          format: email
+          description: Email address of the user
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp of the user account
+
+    Comment:
+      type: object
+      properties:
+        comment_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the comment
+        post_id:
+          type: string
+          description: ID of the post being commented on
+        user_id:
+          type: string
+          description: ID of the user making the comment
+        content:
+          type: string
+          description: Content of the comment
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp of the comment
+
+    Vote:
+      type: object
+      properties:
+        vote_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the vote
+        user_id:
+          type: string
+          description: ID of the user who voted
+        entity_id:
+          type: string
+          description: ID of the entity being voted on
+        entity_type:
+          type: string
+          enum: [post, comment]
+          description: Type of entity being voted on
+        vote_type:
+          type: string
+          enum: [upvote, downvote]
+          description: Type of vote (upvote or downvote)
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp of the vote
+
+    VoteInput:
+      type: object
+      required:
+        - user_id
+        - entity_id
+        - entity_type
+        - vote_type
+      properties:
+        user_id:
+          type: string
+          description: ID of the user who voted
+        entity_id:
+          type: string
+          description: ID of the entity being voted on
+        entity_type:
+          type: string
+          enum: [post, comment]
+          description: Type of entity being voted on
+        vote_type:
+          type: string
+          enum: [upvote, downvote]
+          description: Type of vote (upvote or downvote)
