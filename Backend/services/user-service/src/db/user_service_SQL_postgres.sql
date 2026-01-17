@@ -4,14 +4,13 @@
 
 CREATE DATABASE bear_user_service
     WITH
-    OWNER = postgres
+    OWNER = root
     ENCODING = 'UTF8'
-    LC_COLLATE = 'English_United States.1252'
-    LC_CTYPE = 'English_United States.1252'
+    LC_COLLATE = 'en_US.utf8'
+    LC_CTYPE = 'en_US.utf8'
     LOCALE_PROVIDER = 'libc'
     TABLESPACE = pg_default
-    CONNECTION LIMIT = -1
-    IS_TEMPLATE = False;
+    CONNECTION LIMIT = -1;
 
 -- Create users table
 CREATE TABLE users (
@@ -27,13 +26,27 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_username ON users(username);
 
--- Sample data 1 triệu dòng
+
+
+-- tạo 1000 user ngẫu nhiên
+
 INSERT INTO users (user_id, username, email, password_hash, user_created_at, user_updated_at)
 SELECT
-    'user-' || LPAD(i::text, 7, '0') AS user_id, -- Kết quả: user-0000004, user-0000005...
-    'user_' || i AS username,
-    'user_' || i || '@example.com' AS email,
-    '$2b$10$8K1p/aWxLQfbMXhvupGeEOJU7OhFVKQ2.QEKjHlNTxIVb3Xj09nhG' AS password_hash,
-    NOW() - (random() * interval '365 days') AS user_created_at,
-    NOW() AS user_updated_at
-FROM generate_series(1, 1000003) AS i;
+    -- Tạo user_id dạng UUID (chuỗi 50 ký tự)
+    gen_random_uuid()::varchar(50),
+
+    -- Tạo username ngẫu nhiên: 'user_' + 1 số ngẫu nhiên + 1 chuỗi ký tự
+    'user_' || i || '_' || substring(md5(random()::text), 1, 5),
+
+    -- Tạo email ngẫu nhiên
+    'bear_user_' || i || '@' || (ARRAY['gmail.com', 'outlook.com', 'yahoo.com'])[floor(random() * 3 + 1)]::text,
+
+    -- Tạo password_hash giả lập (chuỗi md5)
+    md5(random()::text || 'secret_salt'),
+
+    -- Ngày tạo ngẫu nhiên trong vòng 1 năm qua
+    NOW() - (random() * (INTERVAL '365 days')),
+
+    -- Ngày cập nhật là ngày hiện tại
+    NOW()
+FROM generate_series(1, 1000) AS s(i);

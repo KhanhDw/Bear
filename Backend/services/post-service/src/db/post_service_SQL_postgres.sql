@@ -4,15 +4,13 @@
 
 CREATE DATABASE bear_post_service
     WITH
-    OWNER = postgres
+    OWNER = root
     ENCODING = 'UTF8'
-    LC_COLLATE = 'English_United States.1252'
-    LC_CTYPE = 'English_United States.1252'
+    LC_COLLATE = 'en_US.utf8'
+    LC_CTYPE = 'en_US.utf8'
     LOCALE_PROVIDER = 'libc'
     TABLESPACE = pg_default
-    CONNECTION LIMIT = -1
-    IS_TEMPLATE = False;
-
+    CONNECTION LIMIT = -1;
 
 
 
@@ -30,5 +28,3 @@ INSERT INTO posts (post_id, post_content, post_author_id, post_created_at) VALUE
 ('00-00','Chào mừng đến với Bear Post Service', 1,CURRENT_TIMESTAMP - INTERVAL '5 days'),
 ('00-01','Hướng dẫn sử dụng hệ thống đăng bài', 1,CURRENT_TIMESTAMP - INTERVAL '4 days'),
 ('00-02','Bí quyết viết blog hiệu quả cho người mới',1, CURRENT_TIMESTAMP - INTERVAL '3 days');
-
-
