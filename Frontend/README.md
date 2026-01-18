@@ -119,3 +119,38 @@ The application uses a custom CSS styling system with:
 - Responsive design patterns
 - Semantic class names
 - Component-specific styling
+
+
+ 1. API → Frontend Feature Mapping Table
+
+
+  ┌─────────────────────────┬───────────────────────┬────────┬───────────────────────────────┐
+  │ Frontend Feature        │ Backend API Endpoint  │ Method │ Description                   │
+  ├─────────────────────────┼───────────────────────┼────────┼───────────────────────────────┤
+  │ User Registration       │ /auth/register        │ POST   │ Create new user account       │
+  │ User Login              │ /auth/login           │ POST   │ Authenticate user and get JWT │
+  │ User Logout             │ /auth/logout          │ POST   │ Invalidate session            │
+  │ Token Verification      │ /auth/verify          │ GET    │ Check if token is valid       │
+  │ User Profile View       │ /users/:id            │ GET    │ Get user details              │
+  │ User Profile Update     │ /users/:id            │ PUT    │ Update user details           │
+  │ User List               │ /users/               │ GET    │ Get all users                 │
+  │ Create Post             │ /posts/               │ POST   │ Create new post               │
+  │ Get Posts               │ /posts/               │ GET    │ Get all posts                 │
+  │ Get Post by ID          │ /posts/:id            │ GET    │ Get specific post             │
+  │ Update Post             │ /posts/:id            │ PUT    │ Update post                   │
+  │ Delete Post             │ /posts/:id            │ DELETE │ Delete post                   │
+  │ Create Comment          │ /comments/            │ POST   │ Add comment to post           │
+  │ Get Comments by Post    │ /comments/by-post     │ GET    │ Get all comments for a post   │
+  │ Get Comments by User    │ /comments/by-user     │ GET    │ Get all comments by user      │
+  │ Get Comment by ID       │ /comments/:id         │ GET    │ Get specific comment          │
+  │ Update Comment          │ /comments/:id         │ PUT    │ Update comment                │
+  │ Delete Comment          │ /comments/:id         │ DELETE │ Delete comment                │
+  │ Get Feed                │ /feed/                │ GET    │ Get user's feed               │
+  │ Add to Feed             │ /feed/add             │ POST   │ Add item to feed              │
+  │ Remove from Feed        │ /feed/remove          │ POST   │ Remove item from feed         │
+  │ Create/Update Vote      │ /votes/               │ POST   │ Vote on post/comment          │
+  │ Get Vote Counts         │ /votes/counts         │ GET    │ Get vote counts for entities  │
+  │ Get Vote by User/Entity │ /votes/by-user-entity │ GET    │ Get user's vote for entity    │
+  │ Remove Vote             │ /votes/by-user-entity │ DELETE │ Remove user's vote            │
+  │ Search                  │ /search/              │ GET    │ Search posts/users            │
+  └─────────────────────────┴───────────────────────┴────────┴───────────────────────────────┘

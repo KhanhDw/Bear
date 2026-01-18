@@ -1,0 +1,851 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - AUTH_SERVICE_HOST=auth-service
+      - AUTH_SERVICE_PORT=3001
+      - USER_SERVICE_HOST=user-service
+      - USER_SERVICE_PORT=3002
+      - POST_SERVICE_HOST=post-service
+      - POST_SERVICE_PORT=3003
+      - COMMENT_SERVICE_HOST=comment-service
+      - COMMENT_SERVICE_PORT=3004
+      - VOTE_SERVICE_HOST=vote-service
+      - VOTE_SERVICE_PORT=3005
+      - FEED_SERVICE_HOST=feed-service
+      - FEED_SERVICE_PORT=3006
+      - NOTIFICATION_SERVICE_HOST=notification-service
+      - NOTIFICATION_SERVICE_PORT=3007
+      - MESSAGING_SERVICE_HOST=messaging-service
+      - MESSAGING_SERVICE_PORT=3008
+      - MEDIA_SERVICE_HOST=media-service
+      - MEDIA_SERVICE_PORT=3009
+      - GROUP_SERVICE_HOST=group-service
+      - GROUP_SERVICE_PORT=3010
+      - SEARCH_SERVICE_HOST=search-service
+      - SEARCH_SERVICE_PORT=3011
+      - ANALYTICS_SERVICE_HOST=analytics-service
+      - ANALYTICS_SERVICE_PORT=3012
+      - MODERATION_SERVICE_HOST=moderation-service
+      - MODERATION_SERVICE_PORT=3013
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+    depends_on:
+      - postgres-gateway
+      - kafka
+      - redis
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Auth Service
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgresql://root:password@postgres-auth:5432/bear_auth_service
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # User Service
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - DATABASE_URL=postgresql://root:password@postgres-user:5432/bear_user_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Post Service
+  post-service:
+    build: ./services/post-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - DATABASE_URL=postgresql://root:password@postgres-post:5432/bear_post_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-post:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Comment Service
+  comment-service:
+    build: ./services/comment-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - DATABASE_URL=postgresql://root:password@postgres-comment:5432/bear_comment_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-comment:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Vote Service
+  vote-service:
+    build: ./services/vote-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - DATABASE_URL=postgresql://root:password@postgres-vote:5432/bear_vote_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-vote:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Feed Service
+  feed-service:
+    build: ./services/feed-service
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+      - DATABASE_URL=postgresql://root:password@postgres-feed:5432/bear_feed_service
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-feed:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Notification Service
+  notification-service:
+    build: ./services/notification-service
+    ports:
+      - "3007:3007"
+    environment:
+      - PORT=3007
+      - DATABASE_URL=postgresql://root:password@postgres-notification:5432/bear_notification_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-notification:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Messaging Service
+  messaging-service:
+    build: ./services/messaging-service
+    ports:
+      - "3008:3008"
+    environment:
+      - PORT=3008
+      - DATABASE_URL=postgresql://root:password@postgres-messaging:5432/bear_messaging_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-messaging:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Media Service
+  media-service:
+    build: ./services/media-service
+    ports:
+      - "3009:3009"
+    environment:
+      - PORT=3009
+      - DATABASE_URL=postgresql://root:password@postgres-media:5432/bear_media_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - UPLOAD_DIR=/app/uploads
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - media-storage:/app/uploads
+    depends_on:
+      postgres-media:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3009/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Group Service
+  group-service:
+    build: ./services/group-service
+    ports:
+      - "3010:3010"
+    environment:
+      - PORT=3010
+      - DATABASE_URL=postgresql://root:password@postgres-group:5432/bear_group_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-group:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Search Service
+  search-service:
+    build: ./services/search-service
+    ports:
+      - "3011:3011"
+    environment:
+      - PORT=3011
+      - DATABASE_URL=postgresql://root:password@postgres-search:5432/bear_search_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-search:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3011/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Analytics Service
+  analytics-service:
+    build: ./services/analytics-service
+    ports:
+      - "3012:3012"
+    environment:
+      - PORT=3012
+      - DATABASE_URL=postgresql://root:password@postgres-analytics:5432/bear_analytics_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-analytics:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3012/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Moderation Service
+  moderation-service:
+    build: ./services/moderation-service
+    ports:
+      - "3013:3013"
+    environment:
+      - PORT=3013
+      - DATABASE_URL=postgresql://root:password@postgres-moderation:5432/bear_moderation_service
+      - KAFKA_BROKERS=kafka:9092
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres-moderation:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3013/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Databases
+  postgres-gateway:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_gateway_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-gateway-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_gateway_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-auth:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_auth_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_auth_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-user:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_user_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-user-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_user_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-post:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_post_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-post-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_post_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-comment:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_comment_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-comment-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_comment_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-vote:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_vote_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-vote-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_vote_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-feed:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_feed_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-feed-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_feed_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-notification:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_notification_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-notification-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_notification_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-messaging:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_messaging_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-messaging-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_messaging_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-media:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_media_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-media-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_media_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-group:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_group_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-group-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_group_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-search:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_search_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-search-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_search_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-analytics:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_analytics_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-analytics-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_analytics_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-moderation:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=bear_moderation_service
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-moderation-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d bear_moderation_service"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - backend
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "kafka:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  postgres-gateway-data:
+  postgres-auth-data:
+  postgres-user-data:
+  postgres-post-data:
+  postgres-comment-data:
+  postgres-vote-data:
+  postgres-feed-data:
+  postgres-notification-data:
+  postgres-messaging-data:
+  postgres-media-data:
+  postgres-group-data:
+  postgres-search-data:
+  postgres-analytics-data:
+  postgres-moderation-data:
+  redis-data:
+  media-storage:

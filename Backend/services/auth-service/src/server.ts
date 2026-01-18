@@ -1,6 +1,6 @@
 import { buildApp } from "./app.js";
 import { config } from "dotenv";
-import { connectProducer } from "../../libs/kafka/index.js";
+import { connectProducer } from "../../../libs/kafka/index.js";
 
 config();
 

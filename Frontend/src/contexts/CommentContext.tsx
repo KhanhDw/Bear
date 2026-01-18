@@ -1,4 +1,3 @@
-// src/contexts/CommentContext.tsx
 import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
 import type { Comment } from '../services/commentService';
 
@@ -15,7 +14,7 @@ type CommentAction =
   | { type: 'DELETE_COMMENT'; payload: string }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'LIKE_COMMENT'; payload: { commentId: string; likesCount: number } };
+  | { type: 'RESET_ERROR' };
 
 const initialState: CommentState = {
   comments: [],
@@ -29,8 +28,8 @@ const CommentContext = createContext<
       dispatch: React.Dispatch<CommentAction>;
       addComment: (comment: Comment) => void;
       updateComment: (comment: Comment) => void;
-      deleteComment: (id: string) => void;
-      likeComment: (commentId: string, likesCount: number) => void;
+      deleteComment: (commentId: string) => void;
+      getCommentsByPostId: (postId: string) => Comment[];
     }
   | undefined
 >(undefined);
@@ -41,6 +40,7 @@ const commentReducer = (state: CommentState, action: CommentAction): CommentStat
       return {
         ...state,
         comments: action.payload,
+        loading: false,
       };
     case 'ADD_COMMENT':
       return {
@@ -69,14 +69,10 @@ const commentReducer = (state: CommentState, action: CommentAction): CommentStat
         ...state,
         error: action.payload,
       };
-    case 'LIKE_COMMENT':
+    case 'RESET_ERROR':
       return {
         ...state,
-        comments: state.comments.map(comment =>
-          comment.id === action.payload.commentId
-            ? { ...comment, likesCount: action.payload.likesCount }
-            : comment
-        ),
+        error: null,
       };
     default:
       return state;
@@ -98,12 +94,12 @@ export const CommentProvider: React.FC<CommentProviderProps> = ({ children }) =>
     dispatch({ type: 'UPDATE_COMMENT', payload: comment });
   };
 
-  const deleteComment = (id: string) => {
-    dispatch({ type: 'DELETE_COMMENT', payload: id });
+  const deleteComment = (commentId: string) => {
+    dispatch({ type: 'DELETE_COMMENT', payload: commentId });
   };
 
-  const likeComment = (commentId: string, likesCount: number) => {
-    dispatch({ type: 'LIKE_COMMENT', payload: { commentId, likesCount } });
+  const getCommentsByPostId = (postId: string) => {
+    return state.comments.filter(comment => comment.postId === postId);
   };
 
   return (
@@ -114,7 +110,7 @@ export const CommentProvider: React.FC<CommentProviderProps> = ({ children }) =>
         addComment,
         updateComment,
         deleteComment,
-        likeComment,
+        getCommentsByPostId,
       }}
     >
       {children}

@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BiSearch, BiX } from 'react-icons/bi';
+import styles from './SearchBar.module.css';
 
 interface SearchResult {
   id: string;
@@ -71,22 +73,22 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, searchResults = [] }) =
   }, []);
 
   return (
-    <div className="relative w-full" ref={searchBarRef}>
+    <div className={styles.searchContainer} ref={searchBarRef}>
       <form 
         onSubmit={handleSearch}
-        className="flex items-center w-full border border-gray-300 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+        className={styles.searchForm}
       >
         <button 
           type="submit"
-          className="p-3 text-gray-500 hover:text-gray-700"
+          className={styles.searchButton}
           aria-label="search"
         >
-          🔍
+          <BiSearch size={18} />
         </button>
         <input
           type="text"
           placeholder="Search posts, people..."
-          className="flex-1 p-2 outline-none"
+          className={styles.searchInput}
           value={query}
           onChange={handleInputChange}
           onFocus={() => query && searchResults.length > 0 && setOpen(true)}
@@ -94,43 +96,43 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, searchResults = [] }) =
         {query && (
           <button
             type="button"
-            className="p-3 text-gray-500 hover:text-gray-700"
+            className={styles.clearButton}
             onClick={clearSearch}
             aria-label="clear"
           >
-            ✕
+            <BiX size={18} />
           </button>
         )}
       </form>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-80 overflow-auto">
+        <div className={styles.dropdown}>
           <ul>
             {searchResults.length > 0 ? (
               searchResults.map((result) => (
                 <li 
                   key={result.id}
-                  className="p-3 hover:bg-gray-100 cursor-pointer flex items-center"
+                  className={styles.resultItem}
                   onClick={() => handleResultClick(result)}
                 >
                   {result.avatar && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
-                      <img src={result.avatar} alt={result.title} className="w-full h-full object-cover" />
+                    <div className={styles.avatar}>
+                      <img src={result.avatar} alt={result.title} className={styles.avatarImage} />
                     </div>
                   )}
                   <div>
-                    <div className="font-medium">{result.title}</div>
-                    {result.subtitle && <div className="text-sm text-gray-600">{result.subtitle}</div>}
+                    <div className={styles.resultTitle}>{result.title}</div>
+                    {result.subtitle && <div className={styles.resultSubtitle}>{result.subtitle}</div>}
                   </div>
                 </li>
               ))
             ) : (
-              <li className="p-3 text-gray-600">No results found</li>
+              <li className={styles.noResults}>No results found</li>
             )}
           </ul>
-          <hr />
+          <hr className={styles.divider} />
           <li 
-            className="p-3 hover:bg-gray-100 cursor-pointer"
+            className={styles.seeAllResults}
             onClick={() => navigate(`/search?q=${encodeURIComponent(query)}`)}
           >
             See all results for "{query}"

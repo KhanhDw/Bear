@@ -1,0 +1,77 @@
+.postCard {
+  background: #ffffff;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.postHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+.postAuthor {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.postTimestamp {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.postContent {
+  margin-bottom: 12px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.postActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.upvoteButton, .downvoteButton, .commentButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.upvoteButton:hover, .downvoteButton:hover, .commentButton:hover {
+  color: #3b82f6;
+  background-color: #f3f4f6;
+}
+
+.count {
+  margin-left: 4px;
+  font-size: 0.875rem;
+}

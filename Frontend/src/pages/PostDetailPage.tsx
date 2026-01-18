@@ -1,88 +1,172 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Header from '../components/common/Header';
-import Sidebar from '../components/common/Sidebar';
 import PostCard from '../components/ui/PostCard';
 import CommentCard from '../components/ui/CommentCard';
+import type { Post } from '../services/postService';
+import type { Comment } from '../services/commentService';
+import Layout from '../components/common/Layout';
+import styles from './PostDetailPage.module.css';
 
 const PostDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+  // Mock data for post
+  useEffect(() => {
+    // Simulate API call
+    const fetchPost = () => {
+      setTimeout(() => {
+        const mockPost: Post = {
+          post_id: id || '1',
+          post_author_id: 'user1',
+          post_author_name: 'John Doe',
+          post_content: 'Just finished an amazing hike in the mountains! The view was absolutely breathtaking. This is a longer post to demonstrate how content looks in the detail view.',
+          post_created_at: '2023-05-15T10:30:00Z',
+          upvotes: 24,
+          downvotes: 2,
+          comments_count: 5
+        };
+        setPost(mockPost);
+        
+        const mockComments: Comment[] = [
+          {
+            id: '1',
+            post_id: id || '1',
+            author_id: 'user2',
+            author_name: 'Jane Smith',
+            content: 'Looks amazing! Where exactly did you hike?',
+            created_at: '2023-05-15T11:30:00Z',
+            likes_count: 3
+          },
+          {
+            id: '2',
+            post_id: id || '1',
+            author_id: 'user3',
+            author_name: 'Bob Johnson',
+            content: 'Beautiful view! Thanks for sharing.',
+            created_at: '2023-05-15T12:00:00Z',
+            likes_count: 1
+          }
+        ];
+        setComments(mockComments);
+        setLoading(false);
+      }, 500);
+    };
 
-  // Sample data for demonstration
-  const samplePost = {
-    id: id || '1',
-    authorName: 'John Doe',
-    authorAvatar: '/static/images/avatar/1.jpg',
-    content: 'Just finished an amazing hike in the mountains! The view was absolutely breathtaking. This is a longer post to demonstrate how content looks in the detail view.',
-    imageUrl: '/static/images/post/1.jpg',
-    likesCount: 24,
-    commentsCount: 5,
-    createdAt: '2 hours ago'
-  };
+    fetchPost();
+  }, [id]);
 
-  const sampleComments = [
-    {
-      id: '1',
-      authorName: 'Jane Smith',
-      authorAvatar: '/static/images/avatar/2.jpg',
-      content: 'Looks amazing! Where exactly did you hike?',
-      likesCount: 3,
-      createdAt: '1 hour ago'
-    },
-    {
-      id: '2',
-      authorName: 'Bob Johnson',
-      authorAvatar: '/static/images/avatar/3.jpg',
-      content: 'Beautiful view! Thanks for sharing.',
-      likesCount: 1,
-      createdAt: '30 minutes ago'
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !post) return;
+
+    const comment: Comment = {
+      id: (comments.length + 1).toString(),
+      post_id: post.post_id,
+      author_id: 'current-user', // In real app, this would be the logged in user
+      author_name: 'Current User', // In real app, this would be the logged in user
+      content: newComment,
+      created_at: new Date().toISOString(),
+      likes_count: 0
+    };
+
+    setComments([...comments, comment]);
+    setNewComment('');
+    
+    // Update post comment count
+    if (post) {
+      setPost({
+        ...post,
+        comments_count: post.comments_count + 1
+      });
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Loading post...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!post) {
+    return (
+      <Layout>
+        <div className={styles.errorContainer}>
+          <h2>Post not found</h2>
+          <p>The post you're looking for doesn't exist.</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
-    <div className="app-container">
-      <Header onDrawerToggle={handleDrawerToggle} />
-      <Sidebar
-        mobileOpen={mobileOpen}
-        handleDrawerToggle={() => setMobileOpen(!mobileOpen)}
-      />
-      <main className="main-content">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Post Detail - {id}</h1>
-          <PostCard
-            id={samplePost.id}
-            authorName={samplePost.authorName}
-            authorAvatar={samplePost.authorAvatar}
-            content={samplePost.content}
-            imageUrl={samplePost.imageUrl}
-            likesCount={samplePost.likesCount}
-            commentsCount={samplePost.commentsCount}
-            createdAt={samplePost.createdAt}
-          />
-          <div className="mt-6">
-            <h2 className="text-xl font-bold mb-4">Comments ({sampleComments.length})</h2>
-            <div className="flex flex-col gap-4">
-              {sampleComments.map((comment) => (
+    <Layout>
+      <div className={styles.postDetailContainer}>
+        <div className={styles.postContainer}><PostCard
+                  key={post.post_id}
+                  post_id={post.post_id}
+                  post_author_id={post.post_author_id}
+                  post_author_name={post.post_author_name}
+                  post_content={post.post_content}
+                  post_created_at={post.post_created_at}
+                  upvotes={post.upvotes}
+                  downvotes={post.downvotes}
+                  comments_count={post.comments_count}
+                />
+        </div>
+        
+        <div className={styles.commentsSection}>
+          <h2 className={styles.commentsTitle}>Comments ({comments.length})</h2>
+          
+          {comments.length > 0 ? (
+            <div className={styles.commentsList}>
+              {comments.map((comment) => (
                 <CommentCard
                   key={comment.id}
                   id={comment.id}
-                  authorName={comment.authorName}
-                  authorAvatar={comment.authorAvatar}
+                  authorName={comment.author_name}
+                  authorAvatar=""
                   content={comment.content}
-                  likesCount={comment.likesCount}
-                  createdAt={comment.createdAt}
+                  likesCount={comment.likes_count}
+                  createdAt={new Date(comment.created_at).toLocaleString()}
+                  onLike={() => console.log('Like comment', comment.id)}
+                  onReply={() => console.log('Reply to comment', comment.id)}
                 />
               ))}
             </div>
-          </div>
+          ) : (
+            <div className={styles.noComments}>
+              <p>No comments yet. Be the first to comment!</p>
+            </div>
+          )}
+          
+          <form onSubmit={handleAddComment} className={styles.commentForm}>
+            <textarea
+              className={styles.commentInput}
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Write a comment..."
+              rows={3}
+            />
+            <button 
+              type="submit" 
+              className={styles.submitButton}
+              disabled={!newComment.trim()}
+            >
+              Comment
+            </button>
+          </form>
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

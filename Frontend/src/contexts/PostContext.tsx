@@ -1,28 +1,23 @@
-// src/contexts/PostContext.tsx
 import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
 import type { Post } from '../services/postService';
 
 interface PostState {
   posts: Post[];
-  currentPost: Post | null;
   loading: boolean;
   error: string | null;
 }
 
 type PostAction =
   | { type: 'SET_POSTS'; payload: Post[] }
-  | { type: 'SET_CURRENT_POST'; payload: Post | null }
   | { type: 'ADD_POST'; payload: Post }
   | { type: 'UPDATE_POST'; payload: Post }
   | { type: 'DELETE_POST'; payload: string }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'LIKE_POST'; payload: { postId: string; likesCount: number } }
-  | { type: 'ADD_COMMENT_TO_POST'; payload: { postId: string; commentCount: number } };
+  | { type: 'RESET_ERROR' };
 
 const initialState: PostState = {
   posts: [],
-  currentPost: null,
   loading: false,
   error: null,
 };
@@ -33,10 +28,8 @@ const PostContext = createContext<
       dispatch: React.Dispatch<PostAction>;
       addPost: (post: Post) => void;
       updatePost: (post: Post) => void;
-      deletePost: (id: string) => void;
-      setCurrentPost: (post: Post | null) => void;
-      likePost: (postId: string, likesCount: number) => void;
-      addCommentToPost: (postId: string, commentCount: number) => void;
+      deletePost: (postId: string) => void;
+      getPostById: (postId: string) => Post | undefined;
     }
   | undefined
 >(undefined);
@@ -47,11 +40,7 @@ const postReducer = (state: PostState, action: PostAction): PostState => {
       return {
         ...state,
         posts: action.payload,
-      };
-    case 'SET_CURRENT_POST':
-      return {
-        ...state,
-        currentPost: action.payload,
+        loading: false,
       };
     case 'ADD_POST':
       return {
@@ -62,21 +51,13 @@ const postReducer = (state: PostState, action: PostAction): PostState => {
       return {
         ...state,
         posts: state.posts.map(post =>
-          post.id === action.payload.id ? action.payload : post
+          post.post_id === action.payload.post_id ? action.payload : post
         ),
-        currentPost:
-          state.currentPost?.id === action.payload.id
-            ? action.payload
-            : state.currentPost,
       };
     case 'DELETE_POST':
       return {
         ...state,
-        posts: state.posts.filter(post => post.id !== action.payload),
-        currentPost:
-          state.currentPost?.id === action.payload
-            ? null
-            : state.currentPost,
+        posts: state.posts.filter(post => post.post_id !== action.payload),
       };
     case 'SET_LOADING':
       return {
@@ -88,43 +69,10 @@ const postReducer = (state: PostState, action: PostAction): PostState => {
         ...state,
         error: action.payload,
       };
-    case 'LIKE_POST':
-      // Update in currentPost if it matches
-      const updatedCurrentPost = 
-        state.currentPost?.id === action.payload.postId
-          ? { ...state.currentPost, likesCount: action.payload.likesCount }
-          : state.currentPost;
-      
-      // Update in posts list
-      const updatedPosts = state.posts.map(post =>
-        post.id === action.payload.postId
-          ? { ...post, likesCount: action.payload.likesCount }
-          : post
-      );
-
+    case 'RESET_ERROR':
       return {
         ...state,
-        currentPost: updatedCurrentPost,
-        posts: updatedPosts,
-      };
-    case 'ADD_COMMENT_TO_POST':
-      // Update in currentPost if it matches
-      const currentPostWithComment = 
-        state.currentPost?.id === action.payload.postId
-          ? { ...state.currentPost, commentsCount: action.payload.commentCount }
-          : state.currentPost;
-      
-      // Update in posts list
-      const postsWithComment = state.posts.map(post =>
-        post.id === action.payload.postId
-          ? { ...post, commentsCount: action.payload.commentCount }
-          : post
-      );
-
-      return {
-        ...state,
-        currentPost: currentPostWithComment,
-        posts: postsWithComment,
+        error: null,
       };
     default:
       return state;
@@ -146,20 +94,12 @@ export const PostProvider: React.FC<PostProviderProps> = ({ children }) => {
     dispatch({ type: 'UPDATE_POST', payload: post });
   };
 
-  const deletePost = (id: string) => {
-    dispatch({ type: 'DELETE_POST', payload: id });
+  const deletePost = (postId: string) => {
+    dispatch({ type: 'DELETE_POST', payload: postId });
   };
 
-  const setCurrentPost = (post: Post | null) => {
-    dispatch({ type: 'SET_CURRENT_POST', payload: post });
-  };
-
-  const likePost = (postId: string, likesCount: number) => {
-    dispatch({ type: 'LIKE_POST', payload: { postId, likesCount } });
-  };
-
-  const addCommentToPost = (postId: string, commentCount: number) => {
-    dispatch({ type: 'ADD_COMMENT_TO_POST', payload: { postId, commentCount } });
+  const getPostById = (postId: string) => {
+    return state.posts.find(post => post.post_id === postId);
   };
 
   return (
@@ -170,9 +110,7 @@ export const PostProvider: React.FC<PostProviderProps> = ({ children }) => {
         addPost,
         updatePost,
         deletePost,
-        setCurrentPost,
-        likePost,
-        addCommentToPost,
+        getPostById,
       }}
     >
       {children}

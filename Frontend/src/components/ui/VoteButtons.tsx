@@ -1,17 +1,6 @@
 import React from 'react';
-import {
-  IconButton,
-  Typography,
-  Box,
-  ToggleButtonGroup,
-  ToggleButton,
-} from '@mui/material';
-import {
-  Favorite as LikeIcon,
-  FavoriteBorder as LikeBorderIcon,
-  ArrowUpward as UpvoteIcon,
-  ArrowDownward as DownvoteIcon,
-} from '@mui/icons-material';
+import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
+import styles from './VoteButtons.module.css';
 
 interface VoteButtonsProps {
   upvotes: number;
@@ -28,64 +17,57 @@ const VoteButtons: React.FC<VoteButtonsProps> = ({
   onVote,
   variant = 'like'
 }) => {
-  const handleVoteChange = (_event: React.MouseEvent<HTMLElement>, newVote: 'up' | 'down' | null) => {
-    if (userVote === newVote) {
+  const handleUpvote = () => {
+    if (userVote === 'up') {
       // If clicking the same vote, remove the vote (set to null)
       onVote(null);
     } else {
-      onVote(newVote);
+      onVote('up');
+    }
+  };
+
+  const handleDownvote = () => {
+    if (userVote === 'down') {
+      // If clicking the same vote, remove the vote (set to null)
+      onVote(null);
+    } else {
+      onVote('down');
     }
   };
 
   if (variant === 'like') {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton 
-          color={userVote === 'up' ? 'error' : 'default'} 
-          onClick={() => onVote(userVote === 'up' ? null : 'up')}
+      <div className={styles.voteContainer}>
+        <button 
+          className={`${styles.voteButton} ${userVote === 'up' ? styles.activeUpvote : ''}`}
+          onClick={handleUpvote}
+          aria-label="like"
         >
-          {userVote === 'up' ? <LikeIcon /> : <LikeBorderIcon />}
-        </IconButton>
-        <Typography variant="body2">{upvotes}</Typography>
-      </Box>
+          <FaThumbsUp />
+        </button>
+        <span className={styles.voteCount}>{upvotes}</span>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <ToggleButtonGroup
-        value={userVote}
-        exclusive
-        onChange={handleVoteChange}
-        aria-label="vote"
+    <div className={styles.voteContainer}>
+      <button 
+        className={`${styles.voteButton} ${styles.upvoteButton} ${userVote === 'up' ? styles.activeUpvote : ''}`}
+        onClick={handleUpvote}
+        aria-label="upvote"
       >
-        <ToggleButton 
-          value="up" 
-          aria-label="upvote"
-          sx={{
-            border: 'none',
-            minWidth: 'auto',
-            color: userVote === 'up' ? 'success.main' : 'inherit'
-          }}
-        >
-          <UpvoteIcon />
-        </ToggleButton>
-        <Typography variant="body2" sx={{ mx: 1 }}>
-          {upvotes - downvotes}
-        </Typography>
-        <ToggleButton 
-          value="down" 
-          aria-label="downvote"
-          sx={{
-            border: 'none',
-            minWidth: 'auto',
-            color: userVote === 'down' ? 'error.main' : 'inherit'
-          }}
-        >
-          <DownvoteIcon />
-        </ToggleButton>
-      </ToggleButtonGroup>
-    </Box>
+        <FaThumbsUp />
+      </button>
+      <span className={styles.voteCount}>{upvotes - downvotes}</span>
+      <button 
+        className={`${styles.voteButton} ${styles.downvoteButton} ${userVote === 'down' ? styles.activeDownvote : ''}`}
+        onClick={handleDownvote}
+        aria-label="downvote"
+      >
+        <FaThumbsDown />
+      </button>
+    </div>
   );
 };
 

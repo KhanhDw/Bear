@@ -1,11 +1,14 @@
 import { buildApp } from "./app.js";
+import { GracefulShutdown } from '../../libs/reliability/src/graceful.shutdown.js';
+import { env } from './config/env.js';
 
 const start = async () => {
   const app = buildApp();
+  const gracefulShutdown = new GracefulShutdown(app);
 
   try {
     const address = await app.listen({
-      port: 8080,
+      port: env.PORT,
       host: "0.0.0.0",
     });
 

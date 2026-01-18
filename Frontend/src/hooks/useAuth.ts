@@ -1,4 +1,3 @@
-// src/hooks/useAuth.ts
 import { useEffect } from 'react';
 import { useUserContext } from '../contexts/UserContext';
 import { mockAuthService } from '../mocks/auth';

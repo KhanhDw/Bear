@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/UserContext";
+import { BiMenu, BiEnvelope, BiBell, BiUser } from 'react-icons/bi';
+import SearchBar from '../ui/SearchBar';
+import styles from './Header.module.css';
 
 interface HeaderProps {
   onDrawerToggle?: () => void;
@@ -40,79 +43,63 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
   };
 
   return (
-    <header className="header">
+    <header className={styles.header}>
       <button
-        className="header-button"
+        className={styles.menuButton}
         onClick={onDrawerToggle}
         aria-label="Toggle menu"
       >
-        ☰
+        <BiMenu size={20} />
       </button>
 
-      <Link to="/feed" className="header-title">
+      <Link to="/feed" className={styles.logo}>
         Bear Social
       </Link>
 
-      {/* Search bar placeholder */}
-      <div
-        className="search-bar-placeholder"
-        style={{ flexGrow: 1, maxWidth: "400px", margin: "0 16px" }}
-      >
-        <input
-          type="text"
-          placeholder="Search..."
-          className="form-input"
-          style={{ width: "100%", padding: "8px 12px" }}
-        />
+      <div className={styles.searchContainer}>
+        <SearchBar />
       </div>
 
-      {/* Notification icons placeholder */}
-      <div
-        className="header-notifications"
-        style={{ display: "flex", gap: "16px", marginRight: "16px" }}
-      >
-        <button className="header-button" aria-label="Messages">
-          ✉️
+      <div className={styles.notifications}>
+        <button className={styles.iconButton} aria-label="Messages">
+          <BiEnvelope size={20} />
         </button>
-        <button className="header-button" aria-label="Notifications">
-          🔔
+        <button className={styles.iconButton} aria-label="Notifications">
+          <BiBell size={20} />
         </button>
       </div>
 
-      <div className="header-profile">
+      <div className={styles.profile}>
         {state.isAuthenticated && state.currentUser ? (
-          <div className="relative">
+          <div className={styles.profileDropdown}>
             <button
-              className="header-button"
+              className={styles.avatarButton}
               onClick={toggleMenu}
               aria-label="User menu"
               aria-expanded={menuOpen}
             >
-              <div className="avatar">
+              <div className={styles.avatar}>
                 {state.currentUser.firstName?.charAt(0) ||
                   state.currentUser.username.charAt(0)}
               </div>
             </button>
 
             {menuOpen && (
-              <div
-                className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
-                style={{ top: "100%", minWidth: "160px" }}
-              >
+              <div className={styles.dropdownMenu}>
                 <button
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  className={styles.dropdownItem}
                   onClick={handleProfileClick}
                 >
                   Profile
                 </button>
                 <button
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  className={styles.dropdownItem}
                   onClick={closeMenu}
                 >
                   My account
                 </button>
                 <button
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  className={styles.dropdownItem}
                   onClick={handleLogout}
                 >
                   Logout
@@ -121,23 +108,22 @@ const Header: React.FC<HeaderProps> = ({ onDrawerToggle }) => {
             )}
           </div>
         ) : (
-          <div className="relative">
+          <div className={styles.profileDropdown}>
             <button
-              className="header-button"
+              className={styles.avatarButton}
               onClick={toggleMenu}
               aria-label="Account menu"
               aria-expanded={menuOpen}
             >
-              <div className="avatar">?</div>
+              <div className={styles.avatar}>
+                <BiUser size={16} />
+              </div>
             </button>
 
             {menuOpen && (
-              <div
-                className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
-                style={{ top: "100%", minWidth: "160px" }}
-              >
+              <div className={styles.dropdownMenu}>
                 <button
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  className={styles.dropdownItem}
                   onClick={handleLogin}
                 >
                   Login

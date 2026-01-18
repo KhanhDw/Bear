@@ -1,8 +1,9 @@
-// src/pages/RegisterPage.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useUserContext } from '../contexts/UserContext';
 import { mockAuthService } from '../mocks/auth';
+import { BiShow, BiHide } from 'react-icons/bi';
+import styles from './RegisterPage.module.css';
 
 const RegisterPage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
@@ -55,135 +56,137 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="form-container">
-      <h2 className="form-title">Create an account</h2>
+    <div className={styles.registerContainer}>
+      <div className={styles.registerForm}>
+        <h2 className={styles.formTitle}>Create an account</h2>
 
-      {error && (
-        <div className="alert alert-error">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="mt-4">
-        <div className="form-group">
-          <label htmlFor="firstName" className="form-label">First Name</label>
-          <input
-            id="firstName"
-            name="firstName"
-            type="text"
-            autoComplete="given-name"
-            required
-            className="form-input"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            autoFocus
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="lastName" className="form-label">Last Name</label>
-          <input
-            id="lastName"
-            name="lastName"
-            type="text"
-            autoComplete="family-name"
-            required
-            className="form-input"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="username" className="form-label">Username</label>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            autoComplete="username"
-            required
-            className="form-input"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="email" className="form-label">Email Address</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="form-input"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password" className="form-label">Password</label>
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              required
-              className="form-input w-full"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? '🙈' : '👁️'}
-            </button>
+        {error && (
+          <div className={styles.errorMessage}>
+            {error}
           </div>
-          <small className="text-gray-500">Must be at least 6 characters</small>
-        </div>
+        )}
 
-        <div className="form-group">
-          <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-          <div className="relative">
+        <form onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label htmlFor="firstName" className={styles.formLabel}>First Name</label>
             <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type={showPassword ? 'text' : 'password'}
+              id="firstName"
+              name="firstName"
+              type="text"
+              autoComplete="given-name"
               required
-              className="form-input w-full"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              className={styles.formInput}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              autoFocus
             />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? '🙈' : '👁️'}
-            </button>
           </div>
-          <small className="text-gray-500">Re-enter your password</small>
-        </div>
 
-        <button
-          type="submit"
-          className="form-button mt-4"
-          disabled={loading}
-        >
-          {loading ? 'Creating Account...' : 'Sign Up'}
-        </button>
+          <div className={styles.formGroup}>
+            <label htmlFor="lastName" className={styles.formLabel}>Last Name</label>
+            <input
+              id="lastName"
+              name="lastName"
+              type="text"
+              autoComplete="family-name"
+              required
+              className={styles.formInput}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </div>
 
-        <div className="text-center mt-4">
-          <Link to="/login" className="form-link">
-            Already have an account? Sign In
-          </Link>
-        </div>
-      </form>
+          <div className={styles.formGroup}>
+            <label htmlFor="username" className={styles.formLabel}>Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autoComplete="username"
+              required
+              className={styles.formInput}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.formLabel}>Email Address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className={styles.formInput}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.formLabel}>Password</label>
+            <div className={styles.passwordContainer}>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                className={styles.formInput}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <BiHide size={20} /> : <BiShow size={20} />}
+              </button>
+            </div>
+            <small className={styles.hintText}>Must be at least 6 characters</small>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="confirmPassword" className={styles.formLabel}>Confirm Password</label>
+            <div className={styles.passwordContainer}>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showPassword ? 'text' : 'password'}
+                required
+                className={styles.formInput}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <BiHide size={20} /> : <BiShow size={20} />}
+              </button>
+            </div>
+            <small className={styles.hintText}>Re-enter your password</small>
+          </div>
+
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={loading}
+          >
+            {loading ? 'Creating Account...' : 'Sign Up'}
+          </button>
+
+          <div className={styles.linksContainer}>
+            <Link to="/login" className={styles.formLink}>
+              Already have an account? Sign In
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

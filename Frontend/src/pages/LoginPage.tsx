@@ -1,8 +1,9 @@
-// src/pages/LoginPage.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useUserContext } from '../contexts/UserContext';
 import { mockAuthService } from '../mocks/auth';
+import { BiShow, BiHide } from 'react-icons/bi';
+import styles from './LoginPage.module.css';
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -37,73 +38,75 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="form-container">
-      <h2 className="form-title">Sign in to your account</h2>
+    <div className={styles.loginContainer}>
+      <div className={styles.loginForm}>
+        <h2 className={styles.formTitle}>Sign in to your account</h2>
 
-      {error && (
-        <div className="alert alert-error">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="mt-4">
-        <div className="form-group">
-          <label htmlFor="email" className="form-label">Email Address</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="form-input"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoFocus
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password" className="form-label">Password</label>
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              required
-              className="form-input w-full"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? '🙈' : '👁️'}
-            </button>
+        {error && (
+          <div className={styles.errorMessage}>
+            {error}
           </div>
-        </div>
+        )}
 
-        <button
-          type="submit"
-          className="form-button mt-4"
-          disabled={loading}
-        >
-          {loading ? 'Signing in...' : 'Sign In'}
-        </button>
+        <form onSubmit={handleSubmit}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email" className={styles.formLabel}>Email Address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              className={styles.formInput}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+            />
+          </div>
 
-        <div className="text-center mt-4">
-          <Link to="/register" className="form-link">
-            Don't have an account? Sign Up
-          </Link>
-        </div>
-        <div className="text-center mt-2">
-          <Link to="/forgot-password" className="form-link">
-            Forgot password?
-          </Link>
-        </div>
-      </form>
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.formLabel}>Password</label>
+            <div className={styles.passwordContainer}>
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                className={styles.formInput}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <BiHide size={20} /> : <BiShow size={20} />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
+          </button>
+
+          <div className={styles.linksContainer}>
+            <Link to="/register" className={styles.formLink}>
+              Don't have an account? Sign Up
+            </Link>
+          </div>
+          <div className={styles.linksContainer}>
+            <Link to="/forgot-password" className={styles.formLink}>
+              Forgot password?
+            </Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

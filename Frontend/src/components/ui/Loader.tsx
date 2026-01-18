@@ -1,5 +1,5 @@
 import React from 'react';
-import { CircularProgress, Box } from '@mui/material';
+import styles from './Loader.module.css';
 
 interface LoaderProps {
   size?: number;
@@ -8,9 +8,16 @@ interface LoaderProps {
 
 const Loader: React.FC<LoaderProps> = ({ size = 40, thickness = 4 }) => {
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100px">
-      <CircularProgress size={size} thickness={thickness} />
-    </Box>
+    <div className={styles.loaderContainer}>
+      <div 
+        className={styles.spinner} 
+        style={{ 
+          width: `${size}px`, 
+          height: `${size}px`, 
+          borderWidth: `${thickness}px` 
+        }}
+      />
+    </div>
   );
 };
 

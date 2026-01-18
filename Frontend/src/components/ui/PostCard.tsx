@@ -1,4 +1,7 @@
 import React from "react";
+import { FaThumbsUp, FaThumbsDown } from "react-icons/fa";
+import { BiComment } from "react-icons/bi";
+import styles from "./PostCard.module.css";
 
 interface PostCardProps {
   post_id: string;
@@ -28,47 +31,47 @@ const PostCard: React.FC<PostCardProps> = ({
   onComment,
 }) => {
   return (
-    <div className="post-card">
-      <div className="post-header">
-        <div className="avatar">
-          {post_author_name.charAt(0).toUpperCase()}
+    <div className={styles.postCard}>
+      <div className={styles.postHeader}>
+        <div className={styles.avatar}>
+          {post_author_name && post_author_name.charAt(0).toUpperCase() || '?'}
         </div>
         <div>
-          <div className="post-author">{post_author_name}</div>
-          <div className="text-gray-500 text-sm">{post_created_at}</div>
+          <div className={styles.postAuthor}>{post_author_name || 'Unknown User'}</div>
+          <div className={styles.postTimestamp}>{post_created_at}</div>
         </div>
       </div>
-      <div className="hidden">
+      <div className={styles.hidden}>
         <p>{post_id}</p>
         <p>{post_author_id}</p>
       </div>
-      <div className="post-content">
+      <div className={styles.postContent}>
         {post_content}
       </div>
-      <div className="post-actions">
+      <div className={styles.postActions}>
         <button 
-          className="flex items-center text-gray-600 hover:text-blue-600"
+          className={styles.upvoteButton}
           onClick={onUpvote}
           aria-label="upvote"
         >
-          👍
-          <span className="ml-1">{upvotes}</span>
+          <FaThumbsUp />
+          <span className={styles.count}>{upvotes}</span>
         </button>
         <button 
-          className="flex items-center text-gray-600 hover:text-blue-600 ml-4"
+          className={styles.downvoteButton}
           onClick={onDownvote}
           aria-label="downvote"
         >
-          👎
-          <span className="ml-1">{downvotes}</span>
+          <FaThumbsDown />
+          <span className={styles.count}>{downvotes}</span>
         </button>
         <button 
-          className="flex items-center text-gray-600 hover:text-blue-600 ml-4"
+          className={styles.commentButton}
           onClick={onComment}
           aria-label="comment"
         >
-          💬
-          <span className="ml-1">{comments_count} comments</span>
+          <BiComment />
+          <span className={styles.count}>{comments_count} comments</span>
         </button>
       </div>
     </div>

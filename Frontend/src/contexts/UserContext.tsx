@@ -1,4 +1,3 @@
-// src/contexts/UserContext.tsx
 import React, { createContext, useContext, useReducer, type ReactNode, useEffect } from 'react';
 import type { User } from '../services/userService';
 import { mockAuthService } from '../mocks/auth';
@@ -87,7 +86,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           dispatch({ type: 'SET_AUTH_STATUS', payload: true });
         }
       } catch (error: any) {
-        dispatch({ type: 'SET_ERROR', payload: error.message || 'Failed to check authentication status' });
+        dispatch({
+          type: 'SET_ERROR',
+          payload: error.message || 'Failed to check authentication status',
+        });
       } finally {
         dispatch({ type: 'SET_LOADING', payload: false });
       }

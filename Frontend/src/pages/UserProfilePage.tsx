@@ -1,96 +1,137 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Header from '../components/common/Header';
-import Sidebar from '../components/common/Sidebar';
-import UserProfileCard from '../components/ui/UserProfileCard';
 import PostCard from '../components/ui/PostCard';
+import type { User } from '../services/userService';
+import type { Post } from '../services/postService';
+import Layout from '../components/common/Layout';
+import styles from './UserProfilePage.module.css';
 
 const UserProfilePage = () => {
   const { id } = useParams<{ id?: string }>();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
+  // Mock data for user and posts
+  useEffect(() => {
+    // Simulate API call
+    const fetchUser = () => {
+      setTimeout(() => {
+        const mockUser: User = {
+          id: id || '1',
+          username: id ? `user${id}` : 'currentuser',
+          email: id ? `user${id}@example.com` : 'currentuser@example.com',
+          firstName: id ? `User${id}` : 'Current',
+          lastName: id ? `Name${id}` : 'User',
+          bio: id
+            ? `This is the profile for user ${id}. They enjoy hiking, photography, and sharing their experiences with the community.`
+            : 'This is your profile. You enjoy hiking, photography, and sharing your experiences with the community.',
+          profilePictureUrl: '/static/images/avatar/1.jpg',
+          createdAt: '2023-01-01T00:00:00Z',
+          updatedAt: '2023-01-01T00:00:00Z'
+        };
+        setUser(mockUser);
+        
+        const mockPosts: Post[] = [
+          {
+            id: '1',
+            authorId: id || '1',
+            authorName: id ? `User ${id}` : 'Current User',
+            content: 'Just finished an amazing hike in the mountains! The view was absolutely breathtaking.',
+            createdAt: '2023-05-15T10:30:00Z',
+            likesCount: 24,
+            commentsCount: 5
+          },
+          {
+            id: '2',
+            authorId: id || '1',
+            authorName: id ? `User ${id}` : 'Current User',
+            content: 'Beautiful sunset tonight. Nature never fails to amaze me.',
+            createdAt: '2023-05-14T18:45:00Z',
+            likesCount: 42,
+            commentsCount: 12
+          }
+        ];
+        setPosts(mockPosts);
+        setLoading(false);
+      }, 500);
+    };
 
-  // Sample user data
-  const sampleUser = {
-    id: id || '1',
-    name: id ? `User ${id}` : 'Current User',
-    username: id ? `user${id}` : 'currentuser',
-    bio: id
-      ? `This is the profile for user ${id}. They enjoy hiking, photography, and sharing their experiences with the community.`
-      : 'This is your profile. You enjoy hiking, photography, and sharing your experiences with the community.',
-    profilePictureUrl: '/static/images/avatar/1.jpg',
-    coverImageUrl: '/static/images/cover/1.jpg',
-    postsCount: 24,
-    followersCount: 128,
-    followingCount: 87
-  };
+    fetchUser();
+  }, [id]);
 
-  // Sample posts for the user
-  const samplePosts = [
-    {
-      id: '1',
-      authorName: sampleUser.name,
-      authorAvatar: sampleUser.profilePictureUrl,
-      content: 'Just finished an amazing hike in the mountains! The view was absolutely breathtaking.',
-      imageUrl: '/static/images/post/1.jpg',
-      likesCount: 24,
-      commentsCount: 5,
-      createdAt: '2 hours ago'
-    },
-    {
-      id: '2',
-      authorName: sampleUser.name,
-      authorAvatar: sampleUser.profilePictureUrl,
-      content: 'Beautiful sunset tonight. Nature never fails to amaze me.',
-      likesCount: 42,
-      commentsCount: 12,
-      createdAt: '1 day ago'
-    }
-  ];
+  if (loading) {
+    return (
+      <Layout>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Loading profile...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Layout>
+        <div className={styles.errorContainer}>
+          <h2>User not found</h2>
+          <p>The user you're looking for doesn't exist.</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
-    <div className="app-container">
-      <Header onDrawerToggle={handleDrawerToggle} />
-      <Sidebar
-        mobileOpen={mobileOpen}
-        handleDrawerToggle={() => setMobileOpen(!mobileOpen)}
-      />
-      <main className="main-content">
-        <div className="max-w-4xl mx-auto">
-          <UserProfileCard
-            name={sampleUser.name}
-            username={sampleUser.username}
-            bio={sampleUser.bio}
-            profilePictureUrl={sampleUser.profilePictureUrl}
-            coverImageUrl={sampleUser.coverImageUrl}
-            postsCount={sampleUser.postsCount}
-            followersCount={sampleUser.followersCount}
-            followingCount={sampleUser.followingCount}
-          />
-          <div className="mt-6">
-            <h2 className="text-xl font-bold mb-4">Posts ({samplePosts.length})</h2>
-            <div className="flex flex-col gap-4">
-              {samplePosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  id={post.id}
-                  authorName={post.authorName}
-                  authorAvatar={post.authorAvatar}
-                  content={post.content}
-                  imageUrl={post.imageUrl}
-                  likesCount={post.likesCount}
-                  commentsCount={post.commentsCount}
-                  createdAt={post.createdAt}
-                />
-              ))}
+    <Layout>
+      <div className={styles.profileContainer}>
+        <div className={styles.profileHeader}>
+          <div className={styles.coverImage}>
+            <div className={styles.coverPlaceholder}></div>
+          </div>
+          <div className={styles.profileInfo}>
+            <div className={styles.avatarContainer}>
+              <div className={styles.avatar}>
+                {user.firstName?.charAt(0) || user.username.charAt(0)}
+              </div>
+            </div>
+            <div className={styles.userInfo}>
+              <h1 className={styles.userName}>
+                {user.firstName} {user.lastName}
+              </h1>
+              <p className={styles.userHandle}>@{user.username}</p>
+              {user.bio && <p className={styles.userBio}>{user.bio}</p>}
             </div>
           </div>
         </div>
-      </main>
-    </div>
+        
+        <div className={styles.profileContent}>
+          <div className={styles.postsSection}>
+            <h2 className={styles.sectionTitle}>Posts</h2>
+            {posts.length > 0 ? (
+              <div className={styles.postsList}>
+                {posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    id={post.id}
+                    authorId={post.authorId}
+                    authorName={post.authorName}
+                    content={post.content}
+                    createdAt={post.createdAt}
+                    likesCount={post.likesCount}
+                    commentsCount={post.commentsCount}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <p>This user hasn't posted anything yet.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </Layout>
   );
 };
 

@@ -1,14 +1,11 @@
 import { buildApp } from "./app.js";
-import { connectProducer } from "../../../libs/kafka/index.js";
-import "./config/kafka.js";
-const start = async () => {
-  const app = buildApp();
 
-  await connectProducer();
+const start = async () => {
+  const app = await buildApp();
 
   try {
     await app.listen({
-      port: 3000,
+      port: 3003, // Using port 3003 for post service
       host: "0.0.0.0",
     });
   } catch (err) {

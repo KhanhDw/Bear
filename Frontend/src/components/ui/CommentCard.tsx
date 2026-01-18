@@ -1,4 +1,7 @@
 import React from 'react';
+import { FaHeart, FaReply } from 'react-icons/fa';
+import { BiDotsVerticalRounded } from 'react-icons/bi';
+import styles from './CommentCard.module.css';
 
 interface CommentCardProps {
   id: string;
@@ -23,40 +26,38 @@ const CommentCard: React.FC<CommentCardProps> = ({
   onReply,
 }) => {
   return (
-    <div 
-      className={`post-card ${isReply ? 'ml-10 mt-2 mb-2 border border-gray-200' : 'mt-2 mb-2'}`}
-      style={{ maxWidth: isReply ? '500px' : '600px' }}
-    >
-      <div className="post-header">
-        <div className="avatar">
-          {authorName.charAt(0)}
+    <div className={`${styles.commentCard} ${isReply ? styles.replyComment : ''}`}>
+      <div className={styles.commentHeader}>
+        <div className={styles.avatar}>
+          {authorName && authorName.charAt(0).toUpperCase() || '?'}
         </div>
         <div>
-          <div className="post-author">{authorName}</div>
-          <div className="text-gray-500 text-sm">{createdAt}</div>
+          <div className={styles.commentAuthor}>{authorName || 'Unknown User'}</div>
+          <div className={styles.commentTimestamp}>{createdAt}</div>
         </div>
-        <button className="ml-auto text-gray-500 hover:text-gray-700">
-          ⋮
+        <button className={styles.moreOptions}>
+          <BiDotsVerticalRounded />
         </button>
       </div>
-      <div className="post-content">
+      <div className={styles.commentContent}>
         {content}
       </div>
-      <div className="post-actions">
+      <div className={styles.commentActions}>
         <button 
-          className="flex items-center text-gray-600 hover:text-red-600"
+          className={styles.likeButton}
           onClick={onLike}
           aria-label="like"
         >
-          ❤️
-          <span className="ml-1">{likesCount} likes</span>
+          <FaHeart />
+          <span className={styles.count}>{likesCount} likes</span>
         </button>
         <button 
-          className="flex items-center text-gray-600 hover:text-blue-600 ml-4"
+          className={styles.replyButton}
           onClick={onReply}
           aria-label="reply"
         >
-          ↪️ Reply
+          <FaReply />
+          <span className={styles.replyText}>Reply</span>
         </button>
       </div>
     </div>

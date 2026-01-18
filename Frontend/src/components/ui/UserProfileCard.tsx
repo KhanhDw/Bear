@@ -1,4 +1,6 @@
 import React from 'react';
+import { BiEnvelope, BiDotsHorizontalRounded } from 'react-icons/bi';
+import styles from './UserProfileCard.module.css';
 
 interface UserProfileCardProps {
   name: string;
@@ -26,57 +28,55 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({
   onMessage,
 }) => {
   return (
-    <div className="card" style={{ maxWidth: '600px', margin: '16px auto' }}>
+    <div className={styles.userProfileCard}>
       {coverImageUrl && (
-        <div className="h-32 overflow-hidden rounded-t-lg">
+        <div className={styles.coverImage}>
           <img 
             src={coverImageUrl} 
             alt="Cover" 
-            className="w-full h-full object-cover"
+            className={styles.coverImg}
           />
         </div>
       )}
-      <div className="relative">
-        <div className="absolute -top-12 left-4">
-          <div className="w-24 h-24 rounded-full border-4 border-white bg-white overflow-hidden">
-            <img 
-              src={profilePictureUrl} 
-              alt={name} 
-              className="w-full h-full object-cover"
-            />
-          </div>
+      <div className={styles.profileInfo}>
+        <div className={styles.profilePictureContainer}>
+          <img 
+            src={profilePictureUrl} 
+            alt={name} 
+            className={styles.profilePicture}
+          />
         </div>
-        <div className="pt-16 pb-4 px-4">
-          <div className="flex justify-between items-start">
+        <div className={styles.userInfo}>
+          <div className={styles.userHeader}>
             <div>
-              <h2 className="text-xl font-bold">{name}</h2>
-              <p className="text-gray-600">@{username}</p>
+              <h2 className={styles.userName}>{name}</h2>
+              <p className={styles.userHandle}>@{username}</p>
             </div>
             <button 
-              className="button button-primary"
+              className={styles.followButton}
               onClick={onFollow}
             >
               Follow
             </button>
           </div>
-          <p className="text-gray-700 my-3">{bio}</p>
-          <div className="flex gap-4">
+          <p className={styles.userBio}>{bio}</p>
+          <div className={styles.stats}>
             <span><strong>{postsCount}</strong> Posts</span>
             <span><strong>{followersCount}</strong> Followers</span>
             <span><strong>{followingCount}</strong> Following</span>
           </div>
         </div>
       </div>
-      <div className="px-4 pb-4">
-        <div className="flex gap-2">
+      <div className={styles.actions}>
+        <div className={styles.actionButtons}>
           <button 
-            className="button button-secondary flex items-center"
+            className={styles.messageButton}
             onClick={onMessage}
           >
-            ✉️ Message
+            <BiEnvelope size={16} /> Message
           </button>
-          <button className="button button-secondary">
-            ⋮ More
+          <button className={styles.moreButton}>
+            <BiDotsHorizontalRounded size={16} /> More
           </button>
         </div>
       </div>
