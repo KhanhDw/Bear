@@ -7,7 +7,6 @@ import {
   deletePost,
 } from "./post.controller.js";
 import { createPostSchema, updatePostSchema } from "./post.schema.js";
-import { health } from "../../health/health.route.js";
 
 export default async function postRoutes(app: FastifyInstance) {
   app.post("/", { schema: createPostSchema }, createPost);
@@ -16,5 +15,4 @@ export default async function postRoutes(app: FastifyInstance) {
   app.put("/:id", { schema: updatePostSchema }, updatePost);
   app.delete("/:id", deletePost);
 
-  app.get("/health", health);
 }

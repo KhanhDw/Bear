@@ -1,34 +1,39 @@
 import { KafkaManager } from './kafka.manager.js';
 
 export class DeadLetterQueueHandler {
-  constructor(private kafkaManager: KafkaManager) {}
+  constructor(private kafka: KafkaManager) {}
 
-  async handlePoisonMessage(topic: string, message: any, error: string) {
-    const dlqTopic = `${topic}.dlq`;
-    
-    await this.kafkaManager.publish(dlqTopic, {
+  async sendToDLQ(
+    topic: string,
+    payload: any,
+    error: unknown
+  ) {
+    await this.kafka.publish(`${topic}.dlq`, {
       originalTopic: topic,
-      originalMessage: message,
-      error,
+      payload,
+      error: String(error),
       timestamp: new Date().toISOString(),
-      retryCount: message.retryCount ? message.retryCount + 1 : 1
+      retryCount: (payload?.retryCount ?? 0) + 1
     });
   }
 
-  async setupDLQProcessor() {
-    const consumer = this.kafkaManager.createConsumer(
+  async startDLQConsumer() {
+    await this.kafka.consume(
       'dlq-processor-group',
-      ['user.created.dlq', 'post.created.dlq', 'comment.created.dlq', 'vote.created.dlq']
+      [
+        'user.created.dlq',
+        'post.created.dlq',
+        'comment.created.dlq',
+        'vote.created.dlq'
+      ],
+      async (message) => {
+        console.error('[DLQ]', message);
+
+        // TODO:
+        // - log to monitoring
+        // - alert ops
+        // - manual reprocess
+      }
     );
-
-    await consumer.subscribe();
-    
-    await consumer.run(async (message) => {
-      console.error('Poison message detected:', message);
-      // Log to monitoring system, alert ops team
-      // Could implement manual intervention workflow here
-    });
-
-    return consumer;
   }
 }

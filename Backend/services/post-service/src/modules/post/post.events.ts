@@ -1,6 +1,7 @@
-import { kafkaProducer } from "../../config/kafka.js";
 import { type DomainEvent } from "@libs/kafka/types.js";
 import { randomUUID } from "crypto";
+import { kafkaProducer } from "../../config/kafka.js";
+import { Post } from "./post.types.js";
 
 const TOPIC = "post.created";
 
@@ -8,34 +9,31 @@ export async function publishPostCreated(post: {
   post_id: string;
   post_content: string;
   post_author_id: string;
-  post_created_at: Date;
-}) {
+  post_created_at: string;
+}, { traceId }: { traceId?: string } = {}) {
   const event: DomainEvent = {
     eventId: randomUUID(),
     eventType: "PostCreated",
     occurredAt: new Date().toISOString(),
     payload: post,
   };
-  console.log("📤 Sending event post.created", event);
+  console.log("Sending event post.created", event);
   await kafkaProducer.send({
     topic: TOPIC,
     messages: [
       {
         key: post.post_id,
+        headers: { 'x-trace-id': traceId },
         value: JSON.stringify(event),
       },
     ],
   });
-  console.log("✅ Event sent");
+  console.log("Event sent");
 }
 
 const UPDATE_TOPIC = "post.updated";
 
-export async function publishPostUpdated(post: {
-  post_id: string;
-  post_content: string;
-  post_author_id: string;
-}) {
+export async function publishPostUpdated(post: Post, ctx?: { traceId?: string }) {
   const event: DomainEvent = {
     eventId: randomUUID(),
     eventType: "PostUpdated",
@@ -43,7 +41,7 @@ export async function publishPostUpdated(post: {
     payload: post,
   };
 
-  console.log("📤 Sending event post.updated", event);
+  console.log("Sending event post.updated", event);
 
   await kafkaProducer.send({
     topic: UPDATE_TOPIC,
@@ -55,7 +53,7 @@ export async function publishPostUpdated(post: {
     ],
   });
 
-  console.log("✅ Event sent");
+  console.log("Event sent");
 }
 
 const DELETE_TOPIC = "post.deleted";
@@ -71,7 +69,7 @@ export async function publishPostDeleted(input: {
     payload: input,
   };
 
-  console.log("📤 Sending event post.deleted", event);
+  console.log("Sending event post.deleted", event);
 
   await kafkaProducer.send({
     topic: DELETE_TOPIC,
@@ -83,5 +81,5 @@ export async function publishPostDeleted(input: {
     ],
   });
 
-  console.log("✅ Event sent");
+  console.log("Event sent");
 }

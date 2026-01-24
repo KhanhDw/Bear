@@ -1,28 +1,28 @@
-import { CreatePostInput, UpdatePostInput, Post } from "./post.types.js";
-import {
-  insertPost,
-  getAllPosts,
-  getPostById,
-  updatePost,
-  deletePost,
-} from "./post.repository.js";
+import { RequestContext } from "src/shared/request-context.js";
 import {
   publishPostCreated,
-  publishPostUpdated,
   publishPostDeleted,
+  publishPostUpdated,
 } from "./post.events.js";
+import {
+  deletePost,
+  getAllPosts,
+  getPostById,
+  insertPost,
+  updatePost,
+} from "./post.repository.js";
+import { CreatePostInput, Post, UpdatePostInput } from "./post.types.js";
+
 
 /* =======================
    CREATE
    ======================= */
 export const createPostService = async (
-  input: CreatePostInput
+  input: CreatePostInput,
+  ctx?: { traceId?: string },
 ): Promise<Post> => {
   const post = await insertPost(input);
-
-  // emit event (fire-and-forget)
-  publishPostCreated(post).catch(console.error);
-
+  publishPostCreated(post, ctx).catch(console.error);
   return post;
 };
 
@@ -37,7 +37,7 @@ export const getPostsService = async (): Promise<Post[]> => {
    READ – GET ONE
    ======================= */
 export const getPostByIdService = async (
-  post_id: string
+  post_id: string,
 ): Promise<Post | null> => {
   return getPostById(post_id);
 };
@@ -47,16 +47,18 @@ export const getPostByIdService = async (
    ======================= */
 export const updatePostService = async (
   post_id: string,
-  input: UpdatePostInput
+  input: UpdatePostInput,
+  ctx?: RequestContext
 ): Promise<Post | null> => {
   const post = await updatePost(post_id, input);
 
   if (post) {
-    publishPostUpdated(post).catch(console.error);
+    publishPostUpdated(post, ctx).catch(console.error);
   }
 
   return post;
 };
+
 
 /* =======================
    DELETE

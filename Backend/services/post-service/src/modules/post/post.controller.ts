@@ -1,10 +1,10 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import { FastifyReply, FastifyRequest } from "fastify";
 import {
   createPostService,
-  getPostsService,
-  getPostByIdService,
-  updatePostService,
   deletePostService,
+  getPostByIdService,
+  getPostsService,
+  updatePostService,
 } from "./post.service.js";
 import { CreatePostInput, UpdatePostInput } from "./post.types.js";
 
@@ -13,9 +13,13 @@ export const createPost = async (
   req: FastifyRequest<{ Body: CreatePostInput }>,
   reply: FastifyReply
 ) => {
-  const post = await createPostService(req.body);
+  const traceId = req.requestLogger?.bindings().traceId;
+
+  const post = await createPostService(req.body, { traceId });
+
   reply.code(201).send(post);
 };
+
 
 /* READ ALL */
 export const getPosts = async (_req: FastifyRequest, reply: FastifyReply) => {
@@ -45,7 +49,8 @@ export const updatePost = async (
   }>,
   reply: FastifyReply
 ) => {
-  const post = await updatePostService(req.params.id, req.body);
+  const ctx = { traceId: req.requestLogger?.bindings().traceId };
+  const post = await updatePostService(req.params.id, req.body, ctx);
 
   if (!post) {
     return reply.code(404).send({ message: "Post not found" });

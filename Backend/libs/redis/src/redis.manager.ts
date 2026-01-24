@@ -22,7 +22,6 @@ export class RedisManager {
       db: options.db,
       lazyConnect: true,
       maxRetriesPerRequest: 3,
-      retryDelayOnFailover: 100,
       enableReadyCheck: true
     });
 
@@ -57,7 +56,7 @@ export class RedisManager {
   async set(key: string, value: any, options: CacheOptions = {}): Promise<boolean> {
     const prefixedKey = options.prefix ? `${options.prefix}:${key}` : key;
     const ttl = options.ttl || 3600; // 1 hour default
-    
+
     try {
       await this.client.setex(prefixedKey, ttl, JSON.stringify(value));
       return true;

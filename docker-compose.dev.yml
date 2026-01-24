@@ -56,6 +56,30 @@ services:
     networks:
       - backend
 
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    profiles: ["infra"]
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"   # optional, để debug từ host
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+
   # ======================
   # MICROSERVICES
   # ======================
@@ -89,6 +113,8 @@ services:
       postgres:
         condition: service_healthy
       kafka-service:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
     restart: unless-stopped
@@ -126,6 +152,8 @@ services:
         condition: service_healthy
       kafka-service:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
     restart: unless-stopped
     networks:
@@ -162,6 +190,8 @@ services:
         condition: service_healthy
       kafka-service:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
     restart: unless-stopped
     networks:
@@ -197,6 +227,8 @@ services:
       postgres:
         condition: service_healthy
       kafka-service:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
     restart: unless-stopped
@@ -248,6 +280,7 @@ services:
 volumes:
   postgres_data:
   kafka_data:
+  redis_data:
 
 # ======================
 # NETWORKS

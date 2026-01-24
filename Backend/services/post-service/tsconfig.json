@@ -16,7 +16,12 @@
     }
   },
   "include": ["src"],
-  "references": [
-    { "path": "../../libs/kafka" }
+  "references": [ //// phải trỏ đến thư mục dự án chứa tsconfig.json
+    { "path": "../../libs/kafka" },
+    { "path": "../../libs/redis" },
+    { "path": "../../libs/logger" },
+    { "path": "../../libs/health" },
+    { "path": "../../libs/middleware" },
+    { "path": "../../libs/outbox" }
   ]
 }

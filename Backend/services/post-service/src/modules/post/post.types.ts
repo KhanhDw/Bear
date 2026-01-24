@@ -13,15 +13,15 @@ export interface CreatePostInput {
 
 export interface Post extends CreatePostInput {
   post_id: string;
-  post_created_at: Date;
+  post_created_at: string;
 }
 
 /* =======================
    UPDATE
    ======================= */
 
-export type UpdatePostInput = Partial<Pick<Post, "post_content">> & {
-  post_id: string;
+export type UpdatePostInput =  {
+  post_content?: string;
 };
 
 /* =======================

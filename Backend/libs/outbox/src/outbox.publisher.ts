@@ -31,44 +31,44 @@ export class OutboxPublisher {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;
-    
+
     const result = await this.dbPool.query(query, [aggregateId, aggregateType, eventType, payload, traceId]);
     return result.rows[0].id;
   }
 
   async startPolling() {
     console.log('Starting outbox publisher...');
-    
+
     const poll = async () => {
       try {
         await this.processUnpublishedEvents();
       } catch (error) {
         console.error('Error in outbox polling:', error);
       }
-      
+
       setTimeout(poll, this.pollInterval);
     };
-    
+
     poll();
   }
 
   private async processUnpublishedEvents() {
     const query = `
-      SELECT * FROM outbox_events 
-      WHERE processed_at IS NULL 
+      SELECT * FROM outbox_events
+      WHERE processed_at IS NULL
         AND published_at IS NULL
         AND retries < max_retries
       ORDER BY occurred_at ASC
       LIMIT $1
     `;
-    
+
     const result = await this.dbPool.query<OutboxEvent>(query, [this.batchSize]);
     const events = result.rows;
-    
+
     for (const event of events) {
       try {
         await this.kafkaManager.publish(event.event_type, event.payload, event.aggregate_id);
-        
+
         // Mark as published
         await this.markAsPublished(event.id);
       } catch (error) {
@@ -80,7 +80,7 @@ export class OutboxPublisher {
 
   private async markAsPublished(eventId: number) {
     const query = `
-      UPDATE outbox_events 
+      UPDATE outbox_events
       SET published_at = CURRENT_TIMESTAMP, processed_at = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
@@ -89,7 +89,7 @@ export class OutboxPublisher {
 
   private async markAsFailed(eventId: number, errorMessage: string) {
     const query = `
-      UPDATE outbox_events 
+      UPDATE outbox_events
       SET retries = retries + 1, error_message = $1
       WHERE id = $2
     `;
@@ -98,7 +98,7 @@ export class OutboxPublisher {
 
   async replayFailedEvents() {
     const query = `
-      UPDATE outbox_events 
+      UPDATE outbox_events
       SET retries = 0, error_message = NULL, processed_at = NULL, published_at = NULL
       WHERE retries >= max_retries
     `;

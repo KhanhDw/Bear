@@ -11,7 +11,12 @@
     "lint": "eslint src --ext .ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["moderation", "content-moderation", "social-network", "microservice"],
+  "keywords": [
+    "moderation",
+    "content-moderation",
+    "social-network",
+    "microservice"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -29,7 +34,6 @@
   },
   "devDependencies": {
     "@types/node": "^20.9.0",
-    "@types/openai": "^4.0.0",
     "tsx": "^3.14.0",
     "typescript": "^5.2.2",
     "@typescript-eslint/eslint-plugin": "^6.11.0",

@@ -5,16 +5,16 @@ import { health } from "../../health/health.route.js";
 export default async function authRoutes(app: FastifyInstance) {
   // Registration
   app.post("/register", register);
-  
+
   // Login
   app.post("/login", login);
-  
+
   // Logout
   app.post("/logout", logout);
-  
+
   // Refresh token
   app.post("/refresh", refreshToken);
-  
+
   // Verify token
   app.get("/verify", verifyToken);
 

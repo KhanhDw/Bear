@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "outDir": "../../dist/libs",
+    "tsBuildInfoFile": "../../dist/.tsbuildinfo/middleware.tsbuildinfo",
+    "rootDir": ".",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext", // <<< QUAN TRỌNG
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true
+  },
+  "references": [ // phải trỏ đến thư mục dự án chứa tsconfig.json
+    { "path": "../logger" }
+  ]
+
+}
