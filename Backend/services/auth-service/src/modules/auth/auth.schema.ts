@@ -1,32 +1,57 @@
 export const registerSchema = {
   body: {
     type: "object",
-    required: ["username", "email", "password"],
+    required: ["email", "password"],
     properties: {
-      username: { type: "string", minLength: 3, maxLength: 50 },
-      email: { type: "string", format: "email" },
-      password: { type: "string", minLength: 6 },
+      email: {
+        type: "string",
+        format: "email",
+        maxLength: 255,
+      },
+      password: {
+        type: "string",
+        minLength: 8,
+        maxLength: 72, // bcrypt limit
+      },
     },
+    additionalProperties: false,
   },
 };
+
 
 export const loginSchema = {
   body: {
     type: "object",
     required: ["email", "password"],
     properties: {
-      email: { type: "string", format: "email" },
-      password: { type: "string", minLength: 6 },
+      email: {
+        type: "string",
+        format: "email",
+        maxLength: 255,
+      },
+      password: {
+        type: "string",
+        minLength: 8,
+        maxLength: 72,
+      },
     },
+    additionalProperties: false,
   },
 };
+
 
 export const refreshTokenSchema = {
   body: {
     type: "object",
-    required: ["refreshToken"],
+    required: ["refresh_token"],
     properties: {
-      refreshToken: { type: "string" },
+      refresh_token: {
+        type: "string",
+        minLength: 128,
+        maxLength: 128,
+      },
     },
+    additionalProperties: false,
   },
 };
+

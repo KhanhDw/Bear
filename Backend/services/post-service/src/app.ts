@@ -1,15 +1,14 @@
-import Fastify, { FastifyRequest }from "fastify";
-import { pool } from "./db/db.js";
-import { env } from './config/env.js';
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
-import postRoutes from "./modules/post/post.routes.js";
-import { logger } from '../../../libs/logger/src/structured.logger.js';
-import { KafkaManager } from '../../../libs/kafka/src/kafka.manager.js';
-import { RedisManager } from '../../../libs/redis/src/redis.manager.js';
-import { OutboxPublisher } from '../../../libs/outbox/src/outbox.publisher.js';
-import { traceMiddleware } from '../../../libs/middleware/src/trace.middleware.js';
+import Fastify, { FastifyRequest } from "fastify";
 import { HealthChecker, registerHealthEndpoints } from '../../../libs/health/src/health.check.js';
+import { KafkaManager } from '../../../libs/kafka/src/kafka.manager.js';
+import { logger } from '../../../libs/logger/src/structured.logger.js';
+import { traceMiddleware } from '../../../libs/middleware/src/trace.middleware.js';
+import { RedisManager } from '../../../libs/redis/src/redis.manager.js';
+import { env } from './config/env.js';
+import { pool } from "./db/db.js";
+import postRoutes from "./modules/post/post.routes.js";
 
 // Global instances
 let kafkaManager: KafkaManager;
@@ -53,6 +52,8 @@ export const buildApp = async () => {
 
     // Initialize health checker
     healthChecker = new HealthChecker(pool, kafkaManager['kafka'], redisManager['client']);
+    // Register health endpoints
+    registerHealthEndpoints(app, healthChecker);
 
 
     // Swagger spec (OpenAPI 3)
@@ -64,8 +65,6 @@ export const buildApp = async () => {
     });
 
 
-    // Register health endpoints
-    registerHealthEndpoints(app, healthChecker);
 
     app.addHook("onRequest", async (req: FastifyRequest) => {
       console.log(`[POST-SERVICE] ${req.method} ${req.url}`);

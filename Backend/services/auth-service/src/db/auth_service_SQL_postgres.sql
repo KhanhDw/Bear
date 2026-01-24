@@ -14,11 +14,9 @@ CREATE DATABASE bear_auth_service
 
 -- Create users table
 CREATE TABLE users (
-    user_id VARCHAR(50) PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    salt VARCHAR(255) NOT NULL,
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -28,9 +26,9 @@ CREATE TABLE users (
 
 -- Create refresh_tokens table
 CREATE TABLE refresh_tokens (
-    token_id VARCHAR(50) PRIMARY KEY,
-    user_id VARCHAR(50) REFERENCES users(user_id),
-    token VARCHAR(255) NOT NULL,
+    token_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(user_id),
+    token_hash CHAR(64) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     is_revoked BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -38,23 +36,51 @@ CREATE TABLE refresh_tokens (
 
 -- Create api_keys table
 CREATE TABLE api_keys (
-    api_key_id VARCHAR(50) PRIMARY KEY,
+    api_key_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     service_name VARCHAR(100) NOT NULL,
-    api_key VARCHAR(255) NOT NULL,
+    api_key_hash CHAR(64) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP
 );
 
+CREATE TABLE outbox_events (
+  event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  aggregate_type TEXT NOT NULL,   -- 'USER'
+  aggregate_id UUID NOT NULL,     -- user_id
+  event_type TEXT NOT NULL,       -- USER_CREATED
+  payload JSONB NOT NULL,
+  is_published BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_outbox_unpublished ON outbox_events(is_published);
+CREATE INDEX idx_outbox_aggregate ON outbox_events(aggregate_type, aggregate_id);
+
+
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = CURRENT_TIMESTAMP;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER trg_users_updated
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+
 -- Indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_expires ON refresh_tokens(expires_at);
 CREATE INDEX idx_api_keys_service ON api_keys(service_name);
-CREATE INDEX idx_api_keys_token ON api_keys(api_key);
-
+CREATE INDEX idx_api_keys_hash ON api_keys(api_key_hash);
+CREATE UNIQUE INDEX uq_refresh_token_hash ON refresh_tokens(token_hash);
 -- Sample data
-INSERT INTO users (user_id, username, email, password_hash, salt, is_active, is_verified, created_at, updated_at) VALUES
-('user-001', 'admin', 'admin@bear.social', '$2b$10$8K1p/aWxLQfbMXhvupGeEOJU7OhFVKQ2.QEKjHlNTxIVb3Xj09nhG', 'salt123', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('user-002', 'demo', 'demo@bear.social', '$2b$10$8K1p/aWxLQfbMXhvupGeEOJU7OhFVKQ2.QEKjHlNTxIVb3Xj09nhG', 'salt123', true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+INSERT INTO users ( email, password_hash, is_active, is_verified, created_at, updated_at) VALUES
+( 'admin@bear.social', '$2b$10$8K1p/aWxLQfbMXhvupGeEOJU7OhFVKQ2.QEKjHlNTxIVb3Xj09nhG',  true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+( 'demo@bear.social', '$2b$10$8K1p/aWxLQfbMXhvupGeEOJU7OhFVKQ2.QEKjHlNTxIVb3Xj09nhG',  true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);

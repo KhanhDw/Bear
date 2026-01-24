@@ -1,5 +1,5 @@
-import { Kafka, CompressionTypes, SASLOptions } from 'kafkajs';
 import Ajv from 'ajv';
+import { CompressionTypes, Kafka, SASLOptions } from 'kafkajs';
 
 export interface KafkaConfig {
   clientId: string;

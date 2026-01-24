@@ -1,140 +1,129 @@
-import { FastifyRequest, FastifyReply } from "fastify";
-import { AuthService } from "./auth.service.js";
-import { RegisterInput, LoginInput } from "./auth.types.js";
 import "@fastify/cookie";
+import { FastifyReply, FastifyRequest } from "fastify";
+import { AuthService } from "./auth.service";
+import { LoginInput, RegisterInput } from "./auth.types";
 
-/* REGISTER */
+/* =======================
+ * REGISTER
+ * ======================= */
 export const register = async (
-  req: FastifyRequest<{
-    Body: RegisterInput;
-  }>,
+  req: FastifyRequest<{ Body: RegisterInput }>,
   reply: FastifyReply
 ) => {
   try {
-    const { username, email, password } = req.body;
+    const user = await AuthService.register(req.body);
 
-    // Validate input
-    if (!username || !email || !password) {
-      return reply.status(400).send({ error: "Username, email, and password are required" });
-    }
+    const { password_hash, ...safeUser } = user;
 
-    const user = await AuthService.register({ username, email, password });
-
-    // Don't return sensitive information
-    const { password_hash, salt, ...safeUser } = user;
-
-    reply.status(201).send({
+    reply.code(201).send({
       message: "User registered successfully",
-      user: safeUser
+      user: safeUser,
     });
-  } catch (error: any) {
-    if (error.message === "User with this email already exists") {
-      return reply.status(409).send({ error: error.message });
+  } catch (err: any) {
+    if (err.message === "User with this email already exists") {
+      return reply.code(409).send({ error: err.message });
     }
-    reply.status(500).send({ error: "Internal server error" });
+    reply.code(500).send({ error: "Internal server error" });
   }
 };
 
-/* LOGIN */
+/* =======================
+ * LOGIN
+ * ======================= */
 export const login = async (
-  req: FastifyRequest<{
-    Body: LoginInput;
-  }>,
+  req: FastifyRequest<{ Body: LoginInput }>,
   reply: FastifyReply
 ) => {
   try {
-    const { email, password } = req.body;
+    const { user, tokens } = await AuthService.login(req.body);
 
-    const result = await AuthService.login({ email, password });
-
-    // Don't return sensitive information
-    const { user, tokens } = result;
-    const { password_hash, salt, ...safeUser } = user;
+    const { password_hash, ...safeUser } = user;
 
     reply.send({
       message: "Login successful",
       user: safeUser,
-      tokens
+      tokens,
     });
-  } catch (error: any) {
-    if (error.message === "Invalid email or password") {
-      return reply.status(401).send({ error: error.message });
+  } catch (err: any) {
+    if (
+      err.message === "Invalid email or password" ||
+      err.message === "Email not verified"
+    ) {
+      return reply.code(401).send({ error: err.message });
     }
-    reply.status(500).send({ error: "Internal server error" });
+    reply.code(500).send({ error: "Internal server error" });
   }
 };
 
-/* LOGOUT */
+/* =======================
+ * LOGOUT
+ * ======================= */
 export const logout = async (
-  req: FastifyRequest,
+  req: FastifyRequest<{ Body?: { refresh_token?: string } }>,
   reply: FastifyReply
 ) => {
   try {
-    // Extract refresh token from cookies or header
-    const refreshToken = req.headers.authorization?.split(' ')[1] || req.cookies?.refreshToken;
+    const refreshToken =
+      req.body?.refresh_token || req.cookies?.refresh_token;
 
     if (refreshToken) {
       await AuthService.logout(refreshToken);
     }
 
     reply.send({ message: "Logout successful" });
-  } catch (error) {
-    reply.status(500).send({ error: "Internal server error" });
+  } catch {
+    reply.code(500).send({ error: "Internal server error" });
   }
 };
 
-/* REFRESH TOKEN */
+/* =======================
+ * REFRESH TOKEN
+ * ======================= */
 export const refreshToken = async (
-  req: FastifyRequest<{
-    Body: { refreshToken: string };
-  }>,
+  req: FastifyRequest<{ Body: { refresh_token: string } }>,
   reply: FastifyReply
 ) => {
   try {
-    const { refreshToken } = req.body;
+    const { refresh_token } = req.body;
 
-    if (!refreshToken) {
-      return reply.status(400).send({ error: "Refresh token is required" });
-    }
-
-    const tokens = await AuthService.refreshAccessToken(refreshToken);
+    const tokens = await AuthService.refreshAccessToken(refresh_token);
 
     reply.send({
       message: "Token refreshed successfully",
-      tokens
+      tokens,
     });
-  } catch (error: any) {
-    if (error.message === "Invalid or expired refresh token") {
-      return reply.status(401).send({ error: error.message });
+  } catch (err: any) {
+    if (err.message === "Invalid or expired refresh token") {
+      return reply.code(401).send({ error: err.message });
     }
-    reply.status(500).send({ error: "Internal server error" });
+    reply.code(500).send({ error: "Internal server error" });
   }
 };
 
-/* VERIFY TOKEN */
+/* =======================
+ * VERIFY ACCESS TOKEN
+ * ======================= */
 export const verifyToken = async (
-  req: FastifyRequest<{
-    Headers: { authorization?: string };
-  }>,
+  req: FastifyRequest<{ Headers: { authorization?: string } }>,
   reply: FastifyReply
 ) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return reply.status(401).send({ error: "Authorization token required" });
+    const auth = req.headers.authorization;
+    if (!auth?.startsWith("Bearer ")) {
+      return reply.code(401).send({ error: "Authorization token required" });
     }
 
-    const token = authHeader.substring(7);
-    const decoded = await AuthService.verifyAccessToken(token);
+    const token = auth.slice(7);
+    const payload = AuthService.verifyAccessToken(token);
 
     reply.send({
       message: "Token is valid",
-      user: { userId: decoded.userId, email: decoded.userEmail }
+      user: {
+        user_id: payload.userId,
+        email: payload.userEmail,
+      },
     });
-  } catch (error: any) {
-    if (error.message === "Invalid or expired access token") {
-      return reply.status(401).send({ error: error.message });
-    }
-    reply.status(500).send({ error: "Internal server error" });
+  } catch {
+    reply.code(401).send({ error: "Invalid or expired access token" });
   }
 };
