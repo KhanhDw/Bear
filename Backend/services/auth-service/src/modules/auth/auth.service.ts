@@ -3,7 +3,7 @@ import crypto from "crypto";
 import jwt, { JwtPayload as JwtBasePayload } from "jsonwebtoken";
 import { pool } from "../../db/db";
 import { AuthRepository } from "./auth.repository";
-import { LoginInput, RegisterInput, TokenPair, User, } from "./auth.types";
+import { LoginInput, RegisterInput, TokenPair, User } from "./auth.types";
 import { EmailService } from "./email.service";
 import { EmailVerificationRepository } from "./email.verification.repository";
 
@@ -13,6 +13,12 @@ import { EmailVerificationRepository } from "./email.verification.repository";
 export interface AccessTokenPayload extends JwtBasePayload {
   userId: string;
   userEmail: string;
+  scopes: string[];
+}
+
+export interface DecodedAccessTokenPayload extends AccessTokenPayload {
+  iat: number;
+  exp: number;
 }
 
 /* =======================
@@ -23,10 +29,12 @@ export class AuthService {
     process.env.JWT_ACCESS_SECRET ?? "dev_access_secret";
 
   private static readonly ACCESS_TOKEN_EXPIRES_IN =
-    (process.env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"]) ?? "15m";
+    (process.env.JWT_ACCESS_EXPIRES_IN as jwt.SignOptions["expiresIn"]) ??
+    "15m";
 
-  private static readonly REFRESH_TOKEN_DAYS =
-    Number(process.env.REFRESH_TOKEN_DAYS ?? 7);
+  private static readonly REFRESH_TOKEN_DAYS = Number(
+    process.env.REFRESH_TOKEN_DAYS ?? 7,
+  );
 
   /* =======================
    * REGISTER
@@ -50,7 +58,7 @@ export class AuthService {
     await pool.query(
       `INSERT INTO outbox_events (aggregate_type, aggregate_id, event_type, payload)
        VALUES ('USER', $1, 'USER_CREATED', $2)`,
-      [user.user_id, JSON.stringify({ email: user.email })]
+      [user.user_id, JSON.stringify({ email: user.email })],
     );
 
     return user;
@@ -60,7 +68,7 @@ export class AuthService {
    * LOGIN
    * ======================= */
   static async login(
-    input: LoginInput
+    input: LoginInput,
   ): Promise<{ user: User; tokens: TokenPair }> {
     const user = await AuthRepository.findByEmail(input.email);
     if (!user || !user.is_active) {
@@ -96,9 +104,7 @@ export class AuthService {
   /* =======================
    * REFRESH TOKEN (ROTATE)
    * ======================= */
-  static async refreshAccessToken(
-    refreshToken: string
-  ): Promise<TokenPair> {
+  static async refreshAccessToken(refreshToken: string): Promise<TokenPair> {
     const client = await pool.connect();
 
     try {
@@ -137,13 +143,17 @@ export class AuthService {
    * ======================= */
   private static async issueTokenPair(
     userId: string,
-    email: string
+    email: string,
   ): Promise<TokenPair> {
-    const accessToken = jwt.sign(
-      { userId, userEmail: email },
-      this.ACCESS_TOKEN_SECRET,
-      { expiresIn: this.ACCESS_TOKEN_EXPIRES_IN }
-    );
+    const payload: AccessTokenPayload = {
+      userId,
+      userEmail: email,
+      scopes: [],
+    };  
+
+    const accessToken = jwt.sign(payload, this.ACCESS_TOKEN_SECRET, {
+      expiresIn: this.ACCESS_TOKEN_EXPIRES_IN,
+    });
 
     const refreshToken = crypto.randomBytes(64).toString("hex");
 
@@ -166,12 +176,12 @@ export class AuthService {
   /* =======================
    * VERIFY ACCESS TOKEN
    * ======================= */
-  static verifyAccessToken(token: string): AccessTokenPayload {
+  static verifyAccessToken(token: string): DecodedAccessTokenPayload {
     try {
       return jwt.verify(
         token,
-        this.ACCESS_TOKEN_SECRET
-      ) as AccessTokenPayload;
+        this.ACCESS_TOKEN_SECRET,
+      ) as DecodedAccessTokenPayload;
     } catch {
       throw new Error("Invalid or expired access token");
     }
@@ -199,8 +209,11 @@ export class AuthService {
     }
 
     // Generate a unique token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(verificationToken)
+      .digest("hex");
 
     // Set expiration time (24 hours)
     const expiresAt = new Date();
@@ -210,14 +223,14 @@ export class AuthService {
     await EmailVerificationRepository.createVerificationToken(
       user.user_id,
       tokenHash,
-      expiresAt.toISOString()
+      expiresAt.toISOString(),
     );
 
     // Send the verification email
     const emailSent = await EmailService.sendVerificationEmail({
       to: user.email,
       token: verificationToken,
-      username: user.email.split('@')[0], // Use part of email as username
+      username: user.email.split("@")[0], // Use part of email as username
     });
 
     return emailSent;
@@ -227,10 +240,11 @@ export class AuthService {
    * VERIFY EMAIL
    * ======================= */
   static async verifyEmail(token: string): Promise<User> {
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
     // Find the token record
-    const tokenRecord = await EmailVerificationRepository.findValidTokenByHash(tokenHash);
+    const tokenRecord =
+      await EmailVerificationRepository.findValidTokenByHash(tokenHash);
     if (!tokenRecord) {
       throw new Error("Invalid or expired verification token");
     }
@@ -241,7 +255,7 @@ export class AuthService {
     // Update user's verification status
     const user = await EmailVerificationRepository.updateUserVerificationStatus(
       tokenRecord.user_id,
-      true
+      true,
     );
 
     return user;

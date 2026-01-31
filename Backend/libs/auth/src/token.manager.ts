@@ -1,5 +1,6 @@
+import { createHash, randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
-import { randomBytes, createHash } from 'crypto';
+import { AccessTokenPayload } from 'services/auth-service/src/modules/auth/auth.service.js';
 import { RedisManager } from '../../redis/src/redis.manager.js';
 
 export interface TokenPayload {
@@ -19,16 +20,14 @@ export class TokenManager {
     private refreshTokenExpiry: string = '7d'
   ) {}
 
-  generateAccessToken(payload: Omit<TokenPayload, 'exp' | 'iat'>): string {
-    return jwt.sign(
-      { 
-        ...payload,
-        scopes: payload.scopes || []
-      },
-      this.accessTokenSecret,
-      { expiresIn: this.accessTokenExpiry }
-    );
-  }
+  generateAccessToken(payload: AccessTokenPayload): string {
+  return jwt.sign(
+    payload,
+    this.accessTokenSecret,
+    { expiresIn: this.accessTokenExpiry }
+  );
+}
+
 
   async generateRefreshToken(payload: Omit<TokenPayload, 'exp' | 'iat'>): Promise<string> {
     const refreshToken = randomBytes(64).toString('hex');
