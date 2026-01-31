@@ -13,18 +13,36 @@ export const createPost = async (
   req: FastifyRequest<{ Body: CreatePostInput }>,
   reply: FastifyReply
 ) => {
-  const traceId = req.requestLogger?.bindings().traceId;
+  try {
+    const traceId = req.requestLogger?.bindings().traceId;
 
-  const post = await createPostService(req.body, { traceId });
+    const post = await createPostService(req.body, { traceId });
 
-  reply.code(201).send(post);
+    reply.code(201).send(post);
+  } catch (error: any) {
+    reply.status(400).send({ message: error.message });
+  }
 };
 
 
 /* READ ALL */
-export const getPosts = async (_req: FastifyRequest, reply: FastifyReply) => {
-  const posts = await getPostsService();
-  reply.send(posts);
+export const getPosts = async (req: FastifyRequest, reply: FastifyReply) => {
+  try {
+    // Extract query parameters for pagination and filtering
+    const { limit, offset, author, search } = req.query as any;
+
+    const options = {
+      limit: limit ? parseInt(limit as string) : undefined,
+      offset: offset ? parseInt(offset as string) : undefined,
+      post_author_id: author as string,
+      search: search as string,
+    };
+
+    const result = await getPostsService(options);
+    reply.send(result);
+  } catch (error: any) {
+    reply.status(500).send({ message: error.message });
+  }
 };
 
 /* READ ONE */
@@ -32,13 +50,17 @@ export const getPostById = async (
   req: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply
 ) => {
-  const post = await getPostByIdService(req.params.id);
+  try {
+    const post = await getPostByIdService(req.params.id);
 
-  if (!post) {
-    return reply.code(404).send({ message: "Post not found" });
+    if (!post) {
+      return reply.code(404).send({ message: "Post not found" });
+    }
+
+    reply.send(post);
+  } catch (error: any) {
+    reply.status(400).send({ message: error.message });
   }
-
-  reply.send(post);
 };
 
 /* UPDATE */
@@ -49,14 +71,27 @@ export const updatePost = async (
   }>,
   reply: FastifyReply
 ) => {
-  const ctx = { traceId: req.requestLogger?.bindings().traceId };
-  const post = await updatePostService(req.params.id, req.body, ctx);
+  try {
+    const ctx = { traceId: req.requestLogger?.bindings().traceId };
 
-  if (!post) {
-    return reply.code(404).send({ message: "Post not found" });
+    // In a real implementation, you would extract the current user from authentication
+    // For now, we'll pass a mock user or undefined
+    const currentUser = req.headers.authorization ? { userId: 'mock-user-id' } : undefined;
+
+    const post = await updatePostService(req.params.id, req.body, currentUser, ctx);
+
+    if (!post) {
+      return reply.code(404).send({ message: "Post not found" });
+    }
+
+    reply.send(post);
+  } catch (error: any) {
+    if (error.message.includes('authorized')) {
+      reply.status(403).send({ message: error.message });
+    } else {
+      reply.status(400).send({ message: error.message });
+    }
   }
-
-  reply.send(post);
 };
 
 /* DELETE */
@@ -64,11 +99,23 @@ export const deletePost = async (
   req: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply
 ) => {
-  const success = await deletePostService(req.params.id);
+  try {
+    // In a real implementation, you would extract the current user from authentication
+    // For now, we'll pass a mock user or undefined
+    const currentUser = req.headers.authorization ? { userId: 'mock-user-id' } : undefined;
 
-  if (!success) {
-    return reply.code(404).send({ message: "Post not found" });
+    const success = await deletePostService(req.params.id, currentUser);
+
+    if (!success) {
+      return reply.code(404).send({ message: "Post not found" });
+    }
+
+    reply.code(204).send();
+  } catch (error: any) {
+    if (error.message.includes('authorized')) {
+      reply.status(403).send({ message: error.message });
+    } else {
+      reply.status(400).send({ message: error.message });
+    }
   }
-
-  reply.code(204).send();
 };

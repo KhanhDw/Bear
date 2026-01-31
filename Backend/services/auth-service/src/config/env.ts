@@ -3,8 +3,8 @@ import { cleanEnv, port, str } from 'envalid';
 
 export const env = cleanEnv(process.env, {
   // NODE_ENV: str({ choices: ['development', 'production', 'test'] }),
-  URL_HOST: str({ default: 'localhost:3005' }),
-  PORT: port({ default: 3005 }),
+  URL_HOST: str({ default: 'localhost:3001' }),
+  PORT: port({ default: 3001 }),
 
   DB_HOST: str(),
   DB_PORT: port(),

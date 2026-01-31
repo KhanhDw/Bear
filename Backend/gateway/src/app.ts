@@ -1,16 +1,14 @@
 // gateway/src/app.ts
-import Fastify from "fastify";
-import proxy from "@fastify/http-proxy";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
+import proxy from "@fastify/http-proxy";
 import jwt from "@fastify/jwt";
 import rateLimit from "@fastify/rate-limit";
 import crypto from 'crypto';
-import { health, readiness } from "./health/health.route.js";
+import Fastify from "fastify";
 import { logger } from '../../libs/logger/src/structured.logger.js';
-import { traceMiddleware } from '../../libs/middleware/src/trace.middleware.js';
-import { ServiceReliability } from '../../libs/reliability/src/circuit.breaker.js';
 import { env } from './config/env.js';
+import { health, readiness } from "./health/health.route.js";
 
 export const buildApp = () => {
   const app = Fastify({
@@ -137,13 +135,13 @@ export const buildApp = () => {
 
   // Proxy routes to auth service
   app.register(proxy, {
-    upstream: `http://${env.AUTH_SERVICE_HOST}:${env.AUTH_SERVICE_PORT}`, // Auth service
+    upstream: `http://${env.LOCAL_AUTH_SERVICE_HOST}:${env.AUTH_SERVICE_PORT}`, // Auth service
     prefix: "/auth",
     rewritePrefix: "",
     http2: false,
     undici: {
       connect: {
-        timeout: 5000
+        timeout: 10000 // Increase timeout to 10 seconds
       }
     },
     replyOptions: {
@@ -162,13 +160,13 @@ export const buildApp = () => {
 
   // Proxy routes to user service
   app.register(proxy, {
-    upstream: `http://${env.USER_SERVICE_HOST}:${env.USER_SERVICE_PORT}`, // User service
+    upstream: `http://${env.LOCAL_USER_SERVICE_HOST}:${env.USER_SERVICE_PORT}`, // User service
     prefix: "/users",
     rewritePrefix: "",
     http2: false,
     undici: {
       connect: {
-        timeout: 5000
+        timeout: 10000 // Increase timeout to 10 seconds
       }
     },
     replyOptions: {
@@ -187,13 +185,13 @@ export const buildApp = () => {
 
   // Proxy routes to post service
   app.register(proxy, {
-    upstream: `http://${env.POST_SERVICE_HOST}:${env.POST_SERVICE_PORT}`, // Post service
+    upstream: `http://${env.LOCAL_POST_SERVICE_HOST}:${env.POST_SERVICE_PORT}`, // Post service
     prefix: "/posts",
     rewritePrefix: "",
     http2: false,
     undici: {
       connect: {
-        timeout: 5000
+        timeout: 10000 // Increase timeout to 10 seconds
       }
     },
     replyOptions: {
@@ -212,13 +210,13 @@ export const buildApp = () => {
 
   // Proxy routes to comment service
   app.register(proxy, {
-    upstream: `http://${env.COMMENT_SERVICE_HOST}:${env.COMMENT_SERVICE_PORT}`, // Comment service
+    upstream: `http://${env.LOCAL_COMMENT_SERVICE_HOST}:${env.COMMENT_SERVICE_PORT}`, // Comment service
     prefix: "/comments",
     rewritePrefix: "",
     http2: false,
     undici: {
       connect: {
-        timeout: 5000
+        timeout: 10000 // Increase timeout to 10 seconds
       }
     },
     replyOptions: {
@@ -238,13 +236,13 @@ export const buildApp = () => {
 
   // Proxy routes to feed service
   app.register(proxy, {
-    upstream: `http://${env.FEED_SERVICE_HOST}:${env.FEED_SERVICE_PORT}`, // Feed service
+    upstream: `http://${env.LOCAL_FEED_SERVICE_HOST}:${env.FEED_SERVICE_PORT}`, // Feed service
     prefix: "/feed",
     rewritePrefix: "",
     http2: false,
     undici: {
       connect: {
-        timeout: 5000
+        timeout: 10000 // Increase timeout to 10 seconds
       }
     },
     replyOptions: {
@@ -263,13 +261,13 @@ export const buildApp = () => {
 
   // Proxy routes to notification service
   app.register(proxy, {
-    upstream: `http://${env.NOTIFICATION_SERVICE_HOST}:${env.NOTIFICATION_SERVICE_PORT}`, // Notification service
+    upstream: `http://${env.LOCAL_NOTIFICATION_SERVICE_HOST}:${env.NOTIFICATION_SERVICE_PORT}`, // Notification service
     prefix: "/notifications",
     rewritePrefix: "",
     http2: false,
     undici: {
       connect: {
-        timeout: 5000
+        timeout: 10000 // Increase timeout to 10 seconds
       }
     },
     replyOptions: {
@@ -288,13 +286,13 @@ export const buildApp = () => {
 
   // Proxy routes to messaging service
   app.register(proxy, {
-    upstream: `http://${env.MESSAGING_SERVICE_HOST}:${env.MESSAGING_SERVICE_PORT}`, // Messaging service
+    upstream: `http://${env.LOCAL_MESSAGING_SERVICE_HOST}:${env.MESSAGING_SERVICE_PORT}`, // Messaging service
     prefix: "/messages",
     rewritePrefix: "",
     http2: false,
     undici: {
       connect: {
-        timeout: 5000
+        timeout: 10000 // Increase timeout to 10 seconds
       }
     },
     replyOptions: {
@@ -313,13 +311,13 @@ export const buildApp = () => {
 
   // Proxy routes to media service
   app.register(proxy, {
-    upstream: `http://${env.MEDIA_SERVICE_HOST}:${env.MEDIA_SERVICE_PORT}`, // Media service
+    upstream: `http://${env.LOCAL_MEDIA_SERVICE_HOST}:${env.MEDIA_SERVICE_PORT}`, // Media service
     prefix: "/media",
     rewritePrefix: "",
     http2: false,
     undici: {
       connect: {
-        timeout: 5000
+        timeout: 10000 // Increase timeout to 10 seconds
       }
     },
     replyOptions: {
@@ -344,14 +342,14 @@ export const buildApp = () => {
   app.get("/", async () => ({
     message: "API Gateway is running",
     services: {
-      auth: `http://localhost:8080/auth (proxies to http://${env.AUTH_SERVICE_HOST}:${env.AUTH_SERVICE_PORT})`,
-      user: `http://localhost:8080/users (proxies to http://${env.USER_SERVICE_HOST}:${env.USER_SERVICE_PORT})`,
-      post: `http://localhost:8080/posts (proxies to http://${env.POST_SERVICE_HOST}:${env.POST_SERVICE_PORT})`,
-      comment: `http://localhost:8080/comments (proxies to http://${env.COMMENT_SERVICE_HOST}:${env.COMMENT_SERVICE_PORT})`,
-      feed: `http://localhost:8080/feed (proxies to http://${env.FEED_SERVICE_HOST}:${env.FEED_SERVICE_PORT})`,
-      notification: `http://localhost:8080/notifications (proxies to http://${env.NOTIFICATION_SERVICE_HOST}:${env.NOTIFICATION_SERVICE_PORT})`,
-      message: `http://localhost:8080/messages (proxies to http://${env.MESSAGING_SERVICE_HOST}:${env.MESSAGING_SERVICE_PORT})`,
-      media: `http://localhost:8080/media (proxies to http://${env.MEDIA_SERVICE_HOST}:${env.MEDIA_SERVICE_PORT})`,
+      auth: `http://localhost:8080/auth (proxies to http://${env.LOCAL_AUTH_SERVICE_HOST}:${env.AUTH_SERVICE_PORT})`,
+      user: `http://localhost:8080/users (proxies to http://${env.LOCAL_USER_SERVICE_HOST}:${env.USER_SERVICE_PORT})`,
+      post: `http://localhost:8080/posts (proxies to http://${env.LOCAL_POST_SERVICE_HOST}:${env.POST_SERVICE_PORT})`,
+      comment: `http://localhost:8080/comments (proxies to http://${env.LOCAL_COMMENT_SERVICE_HOST}:${env.COMMENT_SERVICE_PORT})`,
+      feed: `http://localhost:8080/feed (proxies to http://${env.LOCAL_FEED_SERVICE_HOST}:${env.FEED_SERVICE_PORT})`,
+      notification: `http://localhost:8080/notifications (proxies to http://${env.LOCAL_NOTIFICATION_SERVICE_HOST}:${env.NOTIFICATION_SERVICE_PORT})`,
+      message: `http://localhost:8080/messages (proxies to http://${env.LOCAL_MESSAGING_SERVICE_HOST}:${env.MESSAGING_SERVICE_PORT})`,
+      media: `http://localhost:8080/media (proxies to http://${env.LOCAL_MEDIA_SERVICE_HOST}:${env.MEDIA_SERVICE_PORT})`,
     },
   }));
 

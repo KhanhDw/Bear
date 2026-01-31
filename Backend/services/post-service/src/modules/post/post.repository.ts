@@ -1,4 +1,4 @@
-import { CreatePostInput, UpdatePostInput, Post } from "./post.types.js";
+import { CreatePostInput, UpdatePostInput, Post, ListPostsInput } from "./post.types.js";
 import { randomUUID } from "crypto";
 import { pool } from "../../db/db.js";
 
@@ -21,17 +21,58 @@ export const insertPost = async (input: CreatePostInput): Promise<Post> => {
   return result.rows[0];
 };
 
-/* READ - all */
-export const getAllPosts = async (): Promise<Post[]> => {
-  const result = await pool.query(
-    `
-    SELECT *
-    FROM post
-    ORDER BY post_created_at DESC
-    `
-  );
+/* READ - all with pagination and filtering */
+export const getAllPosts = async (options?: ListPostsInput): Promise<{posts: Post[], total: number}> => {
+  // Build dynamic query based on options
+  let query = 'SELECT * FROM post';
+  let countQuery = 'SELECT COUNT(*) FROM post';
+  const params: any[] = [];
+  const countParams: any[] = [];
 
-  return result.rows;
+  const conditions: string[] = [];
+
+  if (options?.post_author_id) {
+    conditions.push(`post_author_id = $${params.length + 1}`);
+    params.push(options.post_author_id);
+    countParams.push(options.post_author_id);
+  }
+
+  if (options?.search) {
+    conditions.push(`post_content ILIKE $${params.length + 1}`);
+    params.push(`%${options.search}%`);
+    countParams.push(`%${options.search}%`);
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+    countQuery += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  query += ' ORDER BY post_created_at DESC';
+
+  // Add pagination
+  if (options?.limit && options.limit > 0) {
+    query += ` LIMIT $${params.length + 1}`;
+    params.push(options.limit);
+  }
+
+  if (options?.offset && options.offset >= 0) {
+    query += ` OFFSET $${params.length + 1}`;
+    params.push(options.offset);
+  }
+
+  // Execute both queries
+  const [postsResult, countResult] = await Promise.all([
+    pool.query(query, params),
+    pool.query(countQuery, countParams)
+  ]);
+
+  const total = parseInt(countResult.rows[0].count);
+
+  return {
+    posts: postsResult.rows,
+    total
+  };
 };
 
 /* READ - by id */

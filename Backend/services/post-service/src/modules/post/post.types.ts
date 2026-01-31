@@ -50,3 +50,12 @@ export interface ListPostsInput {
   limit?: number;
   offset?: number;
 }
+
+/* =======================
+   RESPONSE TYPES
+   ======================= */
+
+export interface PaginatedResponse<T> {
+  posts: T[];
+  total: number;
+}
