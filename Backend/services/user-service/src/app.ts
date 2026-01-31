@@ -1,22 +1,19 @@
-import Fastify from "fastify";
 import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
-import { Pool } from 'pg';
-import { Kafka } from 'kafkajs';
-import { Redis } from 'ioredis';
+import Fastify from "fastify";
+import { HealthChecker, registerHealthEndpoints } from '../../../libs/health/src/health.check.js';
+import { KafkaManager } from '../../../libs/kafka/src/kafka.manager.js';
+import { logger } from '../../../libs/logger/src/structured.logger.js';
+import { traceMiddleware } from '../../../libs/middleware/src/trace.middleware.js';
+import { OutboxPublisher } from '../../../libs/outbox/src/outbox.publisher.js';
+import { RedisManager } from '../../../libs/redis/src/redis.manager.js';
+import { GracefulShutdown } from '../../../libs/reliability/src/graceful.shutdown.js';
 import { env } from './config/env.js';
-import { buildDbPool } from './db/db.js';
-import { KafkaManager } from '../../libs/kafka/src/kafka.manager.js';
-import { RedisManager } from '../../libs/redis/src/redis.manager.js';
-import { HealthChecker, registerHealthEndpoints } from '../../libs/health/src/health.check.js';
-import { logger } from '../../libs/logger/src/structured.logger.js';
-import { traceMiddleware } from '../../libs/middleware/src/trace.middleware.js';
-import { OutboxPublisher } from '../../libs/outbox/src/outbox.publisher.js';
-import { GracefulShutdown } from '../../libs/reliability/src/graceful.shutdown.js';
+import { pool } from './db/db.js';
 import userRoutes from "./modules/user/user.routes.js";
 
 // Global instances
-let dbPool: Pool;
+
 let kafkaManager: KafkaManager;
 let redisManager: RedisManager;
 let healthChecker: HealthChecker;
@@ -33,8 +30,7 @@ export const buildApp = async () => {
 
   try {
     // Initialize database pool
-    dbPool = buildDbPool(env.DATABASE_URL);
-    await dbPool.query('SELECT 1'); // Test connection
+    const result = await pool.query('SELECT 1'); // Test connection
     logger.info('Database connected');
 
     // Initialize Kafka
@@ -56,14 +52,14 @@ export const buildApp = async () => {
     logger.info('Redis connected');
 
     // Initialize health checker
-    healthChecker = new HealthChecker(dbPool, kafkaManager['kafka'], redisManager['client']);
+    healthChecker = new HealthChecker(pool, kafkaManager['kafka'], redisManager['client']);
 
     // Initialize outbox publisher
-    outboxPublisher = new OutboxPublisher(dbPool, kafkaManager);
+    outboxPublisher = new OutboxPublisher(pool, kafkaManager);
     
     // Initialize graceful shutdown
     const gracefulShutdown = new GracefulShutdown(app);
-    gracefulShutdown.addCleanupTask(async () => GracefulShutdown.closeDatabase(dbPool));
+    gracefulShutdown.addCleanupTask(async () => GracefulShutdown.closeDatabase(pool));
     gracefulShutdown.addCleanupTask(async () => GracefulShutdown.closeKafka(kafkaManager['kafka']));
     gracefulShutdown.addCleanupTask(async () => GracefulShutdown.closeRedis(redisManager['client']));
 

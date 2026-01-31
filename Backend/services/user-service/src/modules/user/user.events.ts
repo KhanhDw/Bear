@@ -1,13 +1,14 @@
-import { kafkaProducer } from "../../config/kafka.js";
-import { type DomainEvent } from "@libs/kafka/types.js";
 import { randomUUID } from "crypto";
+import { type DomainEvent } from "../../../../../libs/kafka/types.js";
+import { kafkaProducer } from "../../config/kafka.js";
 
 const USER_CREATED_TOPIC = "user.created";
 
 export async function publishUserCreated(user: {
   user_id: string;
+  auth_user_id: string;
   username: string;
-  email: string;
+  display_name?: string;
   user_created_at: Date;
 }) {
   const event: DomainEvent = {
@@ -33,8 +34,9 @@ const USER_UPDATED_TOPIC = "user.updated";
 
 export async function publishUserUpdated(user: {
   user_id: string;
+  auth_user_id: string;
   username: string;
-  email: string;
+  display_name?: string;
 }) {
   const event: DomainEvent = {
     eventId: randomUUID(),
@@ -62,6 +64,7 @@ const USER_DELETED_TOPIC = "user.deleted";
 
 export async function publishUserDeleted(input: {
   user_id: string;
+  auth_user_id: string;
 }) {
   const event: DomainEvent = {
     eventId: randomUUID(),

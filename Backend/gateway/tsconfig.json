@@ -1,8 +1,31 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist"
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "./src",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "lib": ["ES2020"],
+    "baseUrl": "./",
+    "paths": {
+      "@libs/*": ["../libs/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [ //// phải trỏ đến thư mục dự án chứa tsconfig.json
+    { "path": "../libs/kafka" },
+    { "path": "../libs/redis" },
+    { "path": "../libs/logger" },
+    { "path": "../libs/health" },
+    { "path": "../libs/middleware" },
+    { "path": "../libs/outbox" },
+    { "path": "../libs/reliability" }
+  ]
+
 }
+

@@ -3,9 +3,24 @@ import { cleanEnv, port, str } from 'envalid';
 export const env = cleanEnv(process.env, {
   PORT: port({ default: 8080 }),
   CORS_ORIGIN: str({ default: '*' }),
-  JWT_SECRET: str({ desc: 'JWT secret key' }),
+  JWT_SECRET: str({ desc: 'JWT secret key' , default: 'JWT_SECRET' }),
   NODE_ENV: str({ default: 'development' }),
   REDIS_URL: str({ default: '' }),
+
+  // Service hosts and ports - allowing for both local and containerized environments
+  AUTH_SERVICE_HOST: str({ default: 'auth-service' }),
+  USER_SERVICE_HOST: str({ default: 'user-service' }),
+  POST_SERVICE_HOST: str({ default: 'post-service' }),
+  COMMENT_SERVICE_HOST: str({ default: 'comment-service' }),
+  FEED_SERVICE_HOST: str({ default: 'feed-service' }),
+  NOTIFICATION_SERVICE_HOST: str({ default: 'notification-service' }),
+  MESSAGING_SERVICE_HOST: str({ default: 'messaging-service' }),
+  MEDIA_SERVICE_HOST: str({ default: 'media-service' }),
+  GROUP_SERVICE_HOST: str({ default: 'group-service' }),
+  SEARCH_SERVICE_HOST: str({ default: 'search-service' }),
+  ANALYTICS_SERVICE_HOST: str({ default: 'analytics-service' }),
+  MODERATION_SERVICE_HOST: str({ default: 'moderation-service' }),
+
   AUTH_SERVICE_PORT: port({ default: 3001 }),
   USER_SERVICE_PORT: port({ default: 3002 }),
   POST_SERVICE_PORT: port({ default: 3003 }),

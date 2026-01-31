@@ -1,5 +1,5 @@
-import { buildApp } from "./app.js";
 import { GracefulShutdown } from '../../libs/reliability/src/graceful.shutdown.js';
+import { buildApp } from "./app.js";
 import { env } from './config/env.js';
 
 const start = async () => {

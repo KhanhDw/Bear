@@ -5,7 +5,7 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import jwt from "@fastify/jwt";
 import rateLimit from "@fastify/rate-limit";
-import circuitBreaker from 'opossum';
+import crypto from 'crypto';
 import { health, readiness } from "./health/health.route.js";
 import { logger } from '../../libs/logger/src/structured.logger.js';
 import { traceMiddleware } from '../../libs/middleware/src/trace.middleware.js';
@@ -45,14 +45,21 @@ export const buildApp = () => {
     max: 1000,
     timeWindow: "1 minute",
     keyGenerator: (req) => {
-      return req.headers['x-forwarded-for'] as string || 
-             req.ip || 
+      return req.headers['x-forwarded-for'] as string ||
+             req.ip ||
              (req.headers['x-real-ip'] as string) ||
              req.socket.remoteAddress || 'unknown';
     },
-    redis: process.env.REDIS_URL ? require('redis').createClient({
-      url: process.env.REDIS_URL
-    }) : undefined,
+    redis: process.env.REDIS_URL ? (() => {
+      try {
+        return require('redis').createClient({
+          url: process.env.REDIS_URL
+        });
+      } catch (error) {
+        console.error('Failed to create Redis client:', error);
+        return undefined;
+      }
+    })() : undefined,
     skipOnError: true, // do not block the request when redis is down
   });
 
@@ -66,23 +73,21 @@ export const buildApp = () => {
   app.get("/ready", readiness);
 
   // Add trace middleware
-  app.addHook('onRequest', async (req, reply, done) => {
+  app.addHook('onRequest', async (req, reply) => {
     // Generate or propagate trace ID
     const traceId = req.headers['x-trace-id'] as string || crypto.randomUUID();
     const userId = req.headers['x-user-id'] as string;
-    
+
     req.headers['x-trace-id'] = traceId;
-    
+
     // Add to logger context
     const requestLogger = logger.child({ traceId, userId });
-    
+
     // Attach to request for use in handlers
     (req as any).requestLogger = requestLogger;
-    
+
     // Add to response headers
     reply.header('x-trace-id', traceId);
-    
-    done();
   });
 
   // Authentication middleware
@@ -132,7 +137,7 @@ export const buildApp = () => {
 
   // Proxy routes to auth service
   app.register(proxy, {
-    upstream: "http://auth-service:3001", // Auth service
+    upstream: `http://${env.AUTH_SERVICE_HOST}:${env.AUTH_SERVICE_PORT}`, // Auth service
     prefix: "/auth",
     rewritePrefix: "",
     http2: false,
@@ -144,8 +149,11 @@ export const buildApp = () => {
     replyOptions: {
       rewriteHeaders: (headers, req) => {
         // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
+        const traceId = req?.headers['x-trace-id'] || crypto.randomUUID();
+        const userId = req?.headers['x-user-id'];
+
+        headers['x-trace-id'] = traceId;
+        if (userId) headers['x-user-id'] = userId;
         headers['x-request-id'] = crypto.randomUUID();
         return headers;
       }
@@ -154,7 +162,7 @@ export const buildApp = () => {
 
   // Proxy routes to user service
   app.register(proxy, {
-    upstream: "http://user-service:3002", // User service
+    upstream: `http://${env.USER_SERVICE_HOST}:${env.USER_SERVICE_PORT}`, // User service
     prefix: "/users",
     rewritePrefix: "",
     http2: false,
@@ -166,8 +174,11 @@ export const buildApp = () => {
     replyOptions: {
       rewriteHeaders: (headers, req) => {
         // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
+        const traceId = req?.headers['x-trace-id'] || crypto.randomUUID();
+        const userId = req?.headers['x-user-id'];
+
+        headers['x-trace-id'] = traceId;
+        if (userId) headers['x-user-id'] = userId;
         headers['x-request-id'] = crypto.randomUUID();
         return headers;
       }
@@ -176,7 +187,7 @@ export const buildApp = () => {
 
   // Proxy routes to post service
   app.register(proxy, {
-    upstream: "http://post-service:3003", // Post service
+    upstream: `http://${env.POST_SERVICE_HOST}:${env.POST_SERVICE_PORT}`, // Post service
     prefix: "/posts",
     rewritePrefix: "",
     http2: false,
@@ -188,8 +199,11 @@ export const buildApp = () => {
     replyOptions: {
       rewriteHeaders: (headers, req) => {
         // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
+        const traceId = req?.headers['x-trace-id'] || crypto.randomUUID();
+        const userId = req?.headers['x-user-id'];
+
+        headers['x-trace-id'] = traceId;
+        if (userId) headers['x-user-id'] = userId;
         headers['x-request-id'] = crypto.randomUUID();
         return headers;
       }
@@ -198,7 +212,7 @@ export const buildApp = () => {
 
   // Proxy routes to comment service
   app.register(proxy, {
-    upstream: "http://comment-service:3004", // Comment service
+    upstream: `http://${env.COMMENT_SERVICE_HOST}:${env.COMMENT_SERVICE_PORT}`, // Comment service
     prefix: "/comments",
     rewritePrefix: "",
     http2: false,
@@ -210,8 +224,11 @@ export const buildApp = () => {
     replyOptions: {
       rewriteHeaders: (headers, req) => {
         // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
+        const traceId = req?.headers['x-trace-id'] || crypto.randomUUID();
+        const userId = req?.headers['x-user-id'];
+
+        headers['x-trace-id'] = traceId;
+        if (userId) headers['x-user-id'] = userId;
         headers['x-request-id'] = crypto.randomUUID();
         return headers;
       }
@@ -221,7 +238,7 @@ export const buildApp = () => {
 
   // Proxy routes to feed service
   app.register(proxy, {
-    upstream: "http://feed-service:3006", // Feed service
+    upstream: `http://${env.FEED_SERVICE_HOST}:${env.FEED_SERVICE_PORT}`, // Feed service
     prefix: "/feed",
     rewritePrefix: "",
     http2: false,
@@ -233,8 +250,11 @@ export const buildApp = () => {
     replyOptions: {
       rewriteHeaders: (headers, req) => {
         // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
+        const traceId = req?.headers['x-trace-id'] || crypto.randomUUID();
+        const userId = req?.headers['x-user-id'];
+
+        headers['x-trace-id'] = traceId;
+        if (userId) headers['x-user-id'] = userId;
         headers['x-request-id'] = crypto.randomUUID();
         return headers;
       }
@@ -243,7 +263,7 @@ export const buildApp = () => {
 
   // Proxy routes to notification service
   app.register(proxy, {
-    upstream: "http://notification-service:3007", // Notification service
+    upstream: `http://${env.NOTIFICATION_SERVICE_HOST}:${env.NOTIFICATION_SERVICE_PORT}`, // Notification service
     prefix: "/notifications",
     rewritePrefix: "",
     http2: false,
@@ -255,8 +275,11 @@ export const buildApp = () => {
     replyOptions: {
       rewriteHeaders: (headers, req) => {
         // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
+        const traceId = req?.headers['x-trace-id'] || crypto.randomUUID();
+        const userId = req?.headers['x-user-id'];
+
+        headers['x-trace-id'] = traceId;
+        if (userId) headers['x-user-id'] = userId;
         headers['x-request-id'] = crypto.randomUUID();
         return headers;
       }
@@ -265,7 +288,7 @@ export const buildApp = () => {
 
   // Proxy routes to messaging service
   app.register(proxy, {
-    upstream: "http://messaging-service:3008", // Messaging service
+    upstream: `http://${env.MESSAGING_SERVICE_HOST}:${env.MESSAGING_SERVICE_PORT}`, // Messaging service
     prefix: "/messages",
     rewritePrefix: "",
     http2: false,
@@ -277,8 +300,11 @@ export const buildApp = () => {
     replyOptions: {
       rewriteHeaders: (headers, req) => {
         // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
+        const traceId = req?.headers['x-trace-id'] || crypto.randomUUID();
+        const userId = req?.headers['x-user-id'];
+
+        headers['x-trace-id'] = traceId;
+        if (userId) headers['x-user-id'] = userId;
         headers['x-request-id'] = crypto.randomUUID();
         return headers;
       }
@@ -287,7 +313,7 @@ export const buildApp = () => {
 
   // Proxy routes to media service
   app.register(proxy, {
-    upstream: "http://media-service:3009", // Media service
+    upstream: `http://${env.MEDIA_SERVICE_HOST}:${env.MEDIA_SERVICE_PORT}`, // Media service
     prefix: "/media",
     rewritePrefix: "",
     http2: false,
@@ -299,8 +325,11 @@ export const buildApp = () => {
     replyOptions: {
       rewriteHeaders: (headers, req) => {
         // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
+        const traceId = req?.headers['x-trace-id'] || crypto.randomUUID();
+        const userId = req?.headers['x-user-id'];
+
+        headers['x-trace-id'] = traceId;
+        if (userId) headers['x-user-id'] = userId;
         headers['x-request-id'] = crypto.randomUUID();
         return headers;
       }
@@ -315,14 +344,14 @@ export const buildApp = () => {
   app.get("/", async () => ({
     message: "API Gateway is running",
     services: {
-      auth: "http://localhost:3001/auth",
-      user: "http://localhost:3002/users",
-      post: "http://localhost:3003/posts",
-      comment: "http://localhost:3004/comments",
-      feed: "http://localhost:3006/feed",
-      notification: "http://localhost:3007/notifications",
-      message: "http://localhost:3008/messages",
-      media: "http://localhost:3009/media",
+      auth: `http://localhost:8080/auth (proxies to http://${env.AUTH_SERVICE_HOST}:${env.AUTH_SERVICE_PORT})`,
+      user: `http://localhost:8080/users (proxies to http://${env.USER_SERVICE_HOST}:${env.USER_SERVICE_PORT})`,
+      post: `http://localhost:8080/posts (proxies to http://${env.POST_SERVICE_HOST}:${env.POST_SERVICE_PORT})`,
+      comment: `http://localhost:8080/comments (proxies to http://${env.COMMENT_SERVICE_HOST}:${env.COMMENT_SERVICE_PORT})`,
+      feed: `http://localhost:8080/feed (proxies to http://${env.FEED_SERVICE_HOST}:${env.FEED_SERVICE_PORT})`,
+      notification: `http://localhost:8080/notifications (proxies to http://${env.NOTIFICATION_SERVICE_HOST}:${env.NOTIFICATION_SERVICE_PORT})`,
+      message: `http://localhost:8080/messages (proxies to http://${env.MESSAGING_SERVICE_HOST}:${env.MESSAGING_SERVICE_PORT})`,
+      media: `http://localhost:8080/media (proxies to http://${env.MEDIA_SERVICE_HOST}:${env.MEDIA_SERVICE_PORT})`,
     },
   }));
 
