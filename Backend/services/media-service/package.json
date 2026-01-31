@@ -12,33 +12,43 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "upload-test": "node test/upload.test.js"
   },
-  "keywords": ["media", "upload", "storage", "social-network", "microservice"],
+  "keywords": [
+    "media",
+    "upload",
+    "storage",
+    "social-network",
+    "microservice"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@fastify/cors": "^8.2.0",
+    "@fastify/env": "^4.2.0",
     "@fastify/helmet": "^11.1.1",
+    "@fastify/jwt": "^7.2.1",
     "@fastify/multipart": "^8.0.0",
     "@fastify/static": "^6.10.2",
-    "@fastify/jwt": "^7.2.1",
-    "@fastify/env": "^4.2.0",
-    "fastify": "^4.24.3",
-    "pg": "^8.11.3",
-    "zod": "^3.22.4",
-    "kafkajs": "^2.2.4",
-    "@types/pg": "^8.10.9",
+    "aws-sdk": "^2.1490.0",
     "dotenv": "^16.3.1",
+    "fastify": "^4.24.3",
+    "kafkajs": "^2.2.4",
+    "multer": "^2.0.2",
+    "pg": "^8.11.3",
     "sharp": "^0.32.6",
-    "aws-sdk": "^2.1490.0"
+    "validator": "^13.15.26",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^20.9.0",
-    "@types/sharp": "^0.32.0",
     "@types/aws-sdk": "^2.7.0",
-    "tsx": "^3.14.0",
-    "typescript": "^5.2.2",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^20.9.0",
+    "@types/pg": "^8.16.0",
+    "@types/sharp": "^0.32.0",
+    "@types/validator": "^13.15.10",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "@typescript-eslint/parser": "^6.11.0",
-    "eslint": "^8.54.0"
+    "eslint": "^8.54.0",
+    "tsx": "^3.14.0",
+    "typescript": "^5.2.2"
   }
 }

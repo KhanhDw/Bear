@@ -16,8 +16,6 @@ services:
       - POST_SERVICE_PORT=3003
       - COMMENT_SERVICE_HOST=comment-service
       - COMMENT_SERVICE_PORT=3004
-      - VOTE_SERVICE_HOST=vote-service
-      - VOTE_SERVICE_PORT=3005
       - FEED_SERVICE_HOST=feed-service
       - FEED_SERVICE_PORT=3006
       - NOTIFICATION_SERVICE_HOST=notification-service
@@ -26,14 +24,6 @@ services:
       - MESSAGING_SERVICE_PORT=3008
       - MEDIA_SERVICE_HOST=media-service
       - MEDIA_SERVICE_PORT=3009
-      - GROUP_SERVICE_HOST=group-service
-      - GROUP_SERVICE_PORT=3010
-      - SEARCH_SERVICE_HOST=search-service
-      - SEARCH_SERVICE_PORT=3011
-      - ANALYTICS_SERVICE_HOST=analytics-service
-      - ANALYTICS_SERVICE_PORT=3012
-      - MODERATION_SERVICE_HOST=moderation-service
-      - MODERATION_SERVICE_PORT=3013
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
     depends_on:
       - postgres-gateway
@@ -204,42 +194,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # Vote Service
-  vote-service:
-    build: ./services/vote-service
-    ports:
-      - "3005:3005"
-    environment:
-      - PORT=3005
-      - DATABASE_URL=postgresql://root:password@postgres-vote:5432/bear_vote_service
-      - KAFKA_BROKERS=kafka:9092
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      postgres-vote:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - backend
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   # Feed Service
   feed-service:
@@ -393,153 +347,9 @@ services:
       retries: 3
       start_period: 40s
 
-  # Group Service
-  group-service:
-    build: ./services/group-service
-    ports:
-      - "3010:3010"
-    environment:
-      - PORT=3010
-      - DATABASE_URL=postgresql://root:password@postgres-group:5432/bear_group_service
-      - KAFKA_BROKERS=kafka:9092
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      postgres-group:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - backend
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # Search Service
-  search-service:
-    build: ./services/search-service
-    ports:
-      - "3011:3011"
-    environment:
-      - PORT=3011
-      - DATABASE_URL=postgresql://root:password@postgres-search:5432/bear_search_service
-      - KAFKA_BROKERS=kafka:9092
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      postgres-search:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - backend
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3011/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # Analytics Service
-  analytics-service:
-    build: ./services/analytics-service
-    ports:
-      - "3012:3012"
-    environment:
-      - PORT=3012
-      - DATABASE_URL=postgresql://root:password@postgres-analytics:5432/bear_analytics_service
-      - KAFKA_BROKERS=kafka:9092
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      postgres-analytics:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - backend
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3012/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
-  # Moderation Service
-  moderation-service:
-    build: ./services/moderation-service
-    ports:
-      - "3013:3013"
-    environment:
-      - PORT=3013
-      - DATABASE_URL=postgresql://root:password@postgres-moderation:5432/bear_moderation_service
-      - KAFKA_BROKERS=kafka:9092
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-here-please-change-it}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      postgres-moderation:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - backend
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3013/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   # PostgreSQL Databases
   postgres-gateway:
@@ -838,14 +648,9 @@ volumes:
   postgres-user-data:
   postgres-post-data:
   postgres-comment-data:
-  postgres-vote-data:
   postgres-feed-data:
   postgres-notification-data:
   postgres-messaging-data:
   postgres-media-data:
-  postgres-group-data:
-  postgres-search-data:
-  postgres-analytics-data:
-  postgres-moderation-data:
   redis-data:
   media-storage:

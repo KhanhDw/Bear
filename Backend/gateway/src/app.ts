@@ -108,15 +108,10 @@ export const buildApp = () => {
       "/users",
       "/posts",
       "/comments",
-      "/search",
       "/feed",
-      "/votes",
       "/notifications",
       "/messages",
-      "/media",
-      "/groups",
-      "/analytics",
-      "/moderation"
+      "/media"
     ];
 
     const isProtectedRoute = protectedPaths.some(path => request.url.startsWith(path));
@@ -223,27 +218,6 @@ export const buildApp = () => {
     }
   });
 
-  // Proxy routes to vote service
-  app.register(proxy, {
-    upstream: "http://vote-service:3005", // Vote service
-    prefix: "/votes",
-    rewritePrefix: "",
-    http2: false,
-    undici: {
-      connect: {
-        timeout: 5000
-      }
-    },
-    replyOptions: {
-      rewriteHeaders: (headers, req) => {
-        // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
-        headers['x-request-id'] = crypto.randomUUID();
-        return headers;
-      }
-    }
-  });
 
   // Proxy routes to feed service
   app.register(proxy, {
@@ -333,93 +307,9 @@ export const buildApp = () => {
     }
   });
 
-  // Proxy routes to group service
-  app.register(proxy, {
-    upstream: "http://group-service:3010", // Group service
-    prefix: "/groups",
-    rewritePrefix: "",
-    http2: false,
-    undici: {
-      connect: {
-        timeout: 5000
-      }
-    },
-    replyOptions: {
-      rewriteHeaders: (headers, req) => {
-        // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
-        headers['x-request-id'] = crypto.randomUUID();
-        return headers;
-      }
-    }
-  });
 
-  // Proxy routes to search service
-  app.register(proxy, {
-    upstream: "http://search-service:3011", // Search service
-    prefix: "/search",
-    rewritePrefix: "",
-    http2: false,
-    undici: {
-      connect: {
-        timeout: 5000
-      }
-    },
-    replyOptions: {
-      rewriteHeaders: (headers, req) => {
-        // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
-        headers['x-request-id'] = crypto.randomUUID();
-        return headers;
-      }
-    }
-  });
 
-  // Proxy routes to analytics service
-  app.register(proxy, {
-    upstream: "http://analytics-service:3012", // Analytics service
-    prefix: "/analytics",
-    rewritePrefix: "",
-    http2: false,
-    undici: {
-      connect: {
-        timeout: 5000
-      }
-    },
-    replyOptions: {
-      rewriteHeaders: (headers, req) => {
-        // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
-        headers['x-request-id'] = crypto.randomUUID();
-        return headers;
-      }
-    }
-  });
 
-  // Proxy routes to moderation service
-  app.register(proxy, {
-    upstream: "http://moderation-service:3013", // Moderation service
-    prefix: "/moderation",
-    rewritePrefix: "",
-    http2: false,
-    undici: {
-      connect: {
-        timeout: 5000
-      }
-    },
-    replyOptions: {
-      rewriteHeaders: (headers, req) => {
-        // Add correlation headers
-        headers['x-trace-id'] = req.headers['x-trace-id'] || crypto.randomUUID();
-        headers['x-user-id'] = req.headers['x-user-id'];
-        headers['x-request-id'] = crypto.randomUUID();
-        return headers;
-      }
-    }
-  });
 
   // Add a fallback route for debugging
   app.get("/", async () => ({
@@ -429,15 +319,10 @@ export const buildApp = () => {
       user: "http://localhost:3002/users",
       post: "http://localhost:3003/posts",
       comment: "http://localhost:3004/comments",
-      vote: "http://localhost:3005/votes",
       feed: "http://localhost:3006/feed",
       notification: "http://localhost:3007/notifications",
       message: "http://localhost:3008/messages",
       media: "http://localhost:3009/media",
-      group: "http://localhost:3010/groups",
-      search: "http://localhost:3011/search",
-      analytics: "http://localhost:3012/analytics",
-      moderation: "http://localhost:3013/moderation",
     },
   }));
 
