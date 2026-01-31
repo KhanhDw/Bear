@@ -5,11 +5,15 @@ import {
   refreshToken,
   register,
   verifyToken,
+  requestEmailVerification,
+  verifyEmail,
 } from "./auth.controller";
 import {
   loginSchema,
   refreshTokenSchema,
   registerSchema,
+  requestVerificationSchema,
+  verifyEmailSchema,
 } from "./auth.schema";
 
 export async function authRoutes(app: FastifyInstance) {
@@ -22,6 +26,10 @@ export async function authRoutes(app: FastifyInstance) {
   app.post("/login", { schema: loginSchema }, login);
 
   app.post("/refresh", { schema: refreshTokenSchema }, refreshToken);
+
+  app.post("/request-verification", { schema: requestVerificationSchema }, requestEmailVerification);
+
+  app.get("/verify-email", { schema: verifyEmailSchema }, verifyEmail);
 
   /* =======================
    * PROTECTED

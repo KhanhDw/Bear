@@ -3,7 +3,9 @@ import crypto from "crypto";
 import jwt, { JwtPayload as JwtBasePayload } from "jsonwebtoken";
 import { pool } from "../../db/db";
 import { AuthRepository } from "./auth.repository";
-import { LoginInput, RegisterInput, TokenPair, User } from "./auth.types";
+import { LoginInput, RegisterInput, TokenPair, User, } from "./auth.types";
+import { EmailService } from "./email.service";
+import { EmailVerificationRepository } from "./email.verification.repository";
 
 /* =======================
  * ACCESS TOKEN PAYLOAD
@@ -181,5 +183,67 @@ export class AuthService {
   static async validateApiKey(apiKey: string): Promise<boolean> {
     const key = await AuthRepository.findApiKey(apiKey);
     return Boolean(key);
+  }
+
+  /* =======================
+   * SEND VERIFICATION EMAIL
+   * ======================= */
+  static async sendVerificationEmail(email: string): Promise<boolean> {
+    const user = await AuthRepository.findByEmail(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.is_verified) {
+      throw new Error("Email already verified");
+    }
+
+    // Generate a unique token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
+    // Set expiration time (24 hours)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    // Store the token in the database
+    await EmailVerificationRepository.createVerificationToken(
+      user.user_id,
+      tokenHash,
+      expiresAt.toISOString()
+    );
+
+    // Send the verification email
+    const emailSent = await EmailService.sendVerificationEmail({
+      to: user.email,
+      token: verificationToken,
+      username: user.email.split('@')[0], // Use part of email as username
+    });
+
+    return emailSent;
+  }
+
+  /* =======================
+   * VERIFY EMAIL
+   * ======================= */
+  static async verifyEmail(token: string): Promise<User> {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find the token record
+    const tokenRecord = await EmailVerificationRepository.findValidTokenByHash(tokenHash);
+    if (!tokenRecord) {
+      throw new Error("Invalid or expired verification token");
+    }
+
+    // Mark the token as used
+    await EmailVerificationRepository.markTokenAsUsed(tokenRecord.token_id);
+
+    // Update user's verification status
+    const user = await EmailVerificationRepository.updateUserVerificationStatus(
+      tokenRecord.user_id,
+      true
+    );
+
+    return user;
   }
 }

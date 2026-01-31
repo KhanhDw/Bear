@@ -15,6 +15,14 @@ export const register = async (
 
     const { password_hash, ...safeUser } = user;
 
+    // Automatically send verification email after registration
+    try {
+      await AuthService.sendVerificationEmail(user.email);
+    } catch (emailErr) {
+      console.error('Failed to send verification email:', emailErr);
+      // Don't fail the registration if email sending fails
+    }
+
     reply.code(201).send({
       message: "User registered successfully",
       user: safeUser,
@@ -22,6 +30,68 @@ export const register = async (
   } catch (err: any) {
     if (err.message === "User with this email already exists") {
       return reply.code(409).send({ error: err.message });
+    }
+    reply.code(500).send({ error: "Internal server error" });
+  }
+};
+
+/* =======================
+ * REQUEST EMAIL VERIFICATION
+ * ======================= */
+export const requestEmailVerification = async (
+  req: FastifyRequest<{ Body: { email: string } }>,
+  reply: FastifyReply
+) => {
+  try {
+    const { email } = req.body;
+
+    await AuthService.sendVerificationEmail(email);
+
+    reply.send({
+      message: "Verification email sent successfully",
+    });
+  } catch (err: any) {
+    if (
+      err.message === "User not found" ||
+      err.message === "Email already verified"
+    ) {
+      return reply.code(400).send({ error: err.message });
+    }
+    reply.code(500).send({ error: "Internal server error" });
+  }
+};
+
+/* =======================
+ * VERIFY EMAIL
+ * ======================= */
+export interface VerifyEmailRequest {
+  Querystring: {
+    token: string;
+  };
+}
+
+export const verifyEmail = async (
+  req: FastifyRequest<VerifyEmailRequest>,
+  reply: FastifyReply
+) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return reply.code(400).send({ error: "Verification token is required" });
+    }
+
+    const user = await AuthService.verifyEmail(token);
+
+    const { password_hash, ...safeUser } = user;
+
+    reply.send({
+      message: "Email verified successfully",
+      user: safeUser,
+    });
+  } catch (err: any) {
+    if (err.message === "Invalid or expired verification token") {
+      return reply.code(400).send({ error: err.message });
     }
     reply.code(500).send({ error: "Internal server error" });
   }

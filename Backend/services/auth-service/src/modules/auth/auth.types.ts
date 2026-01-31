@@ -37,6 +37,18 @@ export interface ApiKey {
 }
 
 /* =========================
+ * EMAIL VERIFICATION TOKEN
+ * ========================= */
+export interface EmailVerificationToken {
+  token_id: string;
+  user_id: string;
+  token_hash: string;
+  expires_at: string;
+  is_used: boolean;
+  created_at: string;
+}
+
+/* =========================
  * INPUT DTOs
  * ========================= */
 export interface LoginInput {

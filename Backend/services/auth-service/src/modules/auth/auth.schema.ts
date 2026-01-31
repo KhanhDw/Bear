@@ -55,3 +55,32 @@ export const refreshTokenSchema = {
   },
 };
 
+export const requestVerificationSchema = {
+  body: {
+    type: "object",
+    required: ["email"],
+    properties: {
+      email: {
+        type: "string",
+        format: "email",
+        maxLength: 255,
+      },
+    },
+    additionalProperties: false,
+  },
+};
+
+export const verifyEmailSchema = {
+  querystring: {
+    type: "object",
+    required: ["token"],
+    properties: {
+      token: {
+        type: "string",
+        minLength: 1,
+        maxLength: 255,
+      },
+    },
+    additionalProperties: false,
+  },
+};
